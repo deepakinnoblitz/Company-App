@@ -1,0 +1,62 @@
+import frappe
+from frappe.model.document import Document
+from frappe.utils import getdate, flt
+
+class Invoice(Document):
+    
+    def autoname(self):
+        """Set document name = ref_no"""
+        if self.ref_no:
+            self.name = self.ref_no
+
+    def before_insert(self):
+        """Generate Invoice ref_no before inserting"""
+        if not self.ref_no:
+            today = getdate()
+            year = today.year
+
+            # Financial Year (April → March)
+            if today.month < 4:
+                start_year = year - 1
+                end_year = year
+            else:
+                start_year = year
+                end_year = year + 1
+
+            fy = f"{str(start_year)[-2:]}-{str(end_year)[-2:]}"  # e.g., 25-26
+
+            # Get last Invoice in this FY
+            last = frappe.db.sql("""
+                SELECT ref_no FROM `tabInvoice`
+                WHERE ref_no LIKE %s
+                ORDER BY creation DESC LIMIT 1
+            """, (f"IB-I/{fy}/%",), as_dict=True)
+
+            if last:
+                last_num = int(last[0].ref_no.split("/")[-1])
+                next_num = last_num + 1
+            else:
+                next_num = 1
+
+            # Assign ref_no
+            self.ref_no = f"IB-I/{fy}/{str(next_num).zfill(3)}"
+
+            # Also set document name
+            self.name = self.ref_no
+
+    def after_insert(self):
+        """Update received_amount and balance_amount after saving the invoice"""
+        total_collected = frappe.db.sql("""
+            SELECT SUM(amount_collected) FROM `tabInvoice Collection`
+            WHERE invoice=%s
+        """, self.name)[0][0] or 0
+
+        balance_amount = flt(self.grand_total) - flt(total_collected)
+        if balance_amount < 0:
+            balance_amount = 0
+
+        # Use set_value to persist to DB
+        frappe.db.set_value(self.doctype, self.name, {
+            "received_amount": flt(total_collected),
+            "balance_amount": flt(balance_amount)
+        })

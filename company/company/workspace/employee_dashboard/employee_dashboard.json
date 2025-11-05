@@ -1,0 +1,62 @@
+{
+ "app": "company",
+ "charts": [
+  {
+   "chart_name": "Monthly Attendance",
+   "label": "Monthly Attendance"
+  }
+ ],
+ "content": "[{\"id\":\"LoZ-E2VG-V\",\"type\":\"custom_block\",\"data\":{\"custom_block_name\":\"Announcement\",\"col\":12}},{\"id\":\"6UH6Jn6pba\",\"type\":\"custom_block\",\"data\":{\"custom_block_name\":\"Weekly Working Hours\",\"col\":6}},{\"id\":\"g0MO7eZVHU\",\"type\":\"chart\",\"data\":{\"chart_name\":\"Monthly Attendance\",\"col\":6}},{\"id\":\"xMelcZdkjG\",\"type\":\"custom_block\",\"data\":{\"custom_block_name\":\"Today Birthday\",\"col\":12}},{\"id\":\"hgZSmer1Zk\",\"type\":\"custom_block\",\"data\":{\"custom_block_name\":\"Today Leave\",\"col\":12}},{\"id\":\"kCa0D97cOc\",\"type\":\"spacer\",\"data\":{\"col\":12}},{\"id\":\"LSB319Ltuh\",\"type\":\"spacer\",\"data\":{\"col\":12}},{\"id\":\"0S7tOr3xt5\",\"type\":\"custom_block\",\"data\":{\"custom_block_name\":\"Month Calendar\",\"col\":12}}]",
+ "creation": "2025-09-30 15:56:05.201442",
+ "custom_blocks": [
+  {
+   "custom_block_name": "Today Leave",
+   "label": "Today Leave"
+  },
+  {
+   "custom_block_name": "Month Calendar",
+   "label": "Month Calendar"
+  },
+  {
+   "custom_block_name": "Weekly Working Hours",
+   "label": "Weekly Working Hours"
+  },
+  {
+   "custom_block_name": "Announcement",
+   "label": "Announcement"
+  },
+  {
+   "custom_block_name": "Today Birthday",
+   "label": "Today Birthday"
+  }
+ ],
+ "docstatus": 0,
+ "doctype": "Workspace",
+ "for_user": "",
+ "hide_custom": 0,
+ "icon": "home",
+ "idx": 1,
+ "indicator_color": "green",
+ "is_hidden": 0,
+ "label": "Employee Dashboard",
+ "link_type": "DocType",
+ "links": [],
+ "modified": "2025-11-03 16:10:59.838513",
+ "modified_by": "Administrator",
+ "module": "Company",
+ "name": "Employee Dashboard",
+ "number_cards": [],
+ "owner": "Administrator",
+ "parent_page": "",
+ "public": 1,
+ "quick_lists": [],
+ "roles": [
+  {
+   "role": "Employee"
+  }
+ ],
+ "sequence_id": 1.0,
+ "shortcuts": [],
+ "title": "Employee Dashboard",
+ "type": "Workspace"
+}

@@ -1,0 +1,34 @@
+[
+ {
+  "bank_account": "1234567908",
+  "country": "India",
+  "date_of_joining": "2025-09-09",
+  "department": "HR",
+  "designation": "Manager",
+  "docstatus": 0,
+  "doctype": "Employee",
+  "email": "priya@gmail.com",
+  "employee_id": "2",
+  "employee_name": "Priya Singh",
+  "modified": "2025-09-25 10:31:58.937648",
+  "name": "EMP00002",
+  "phone": "+91-8764536365",
+  "status": "Active"
+ },
+ {
+  "bank_account": "1234567890",
+  "country": "India",
+  "date_of_joining": "2025-09-09",
+  "department": "IT",
+  "designation": "Laravel Developer",
+  "docstatus": 0,
+  "doctype": "Employee",
+  "email": "deepak@gmail.com",
+  "employee_id": "1",
+  "employee_name": "Deepak",
+  "modified": "2025-09-25 10:31:49.327742",
+  "name": "EMP00001",
+  "phone": "+91-9751523556",
+  "status": "Active"
+ }
+]

@@ -1,0 +1,221 @@
+{
+ "actions": [],
+ "allow_rename": 1,
+ "autoname": "field:ref_no",
+ "creation": "2025-09-19 10:58:13.523840",
+ "doctype": "DocType",
+ "engine": "InnoDB",
+ "field_order": [
+  "invoice_details_section",
+  "client_name",
+  "invoice_date",
+  "po_no",
+  "payment_terms",
+  "ref_no",
+  "column_break_nfoe",
+  "billing_name",
+  "phone_number",
+  "po_date",
+  "due_date",
+  "section_break_wbpo",
+  "table_qecz",
+  "section_break_mzdp",
+  "attach",
+  "description",
+  "column_break_ofbd",
+  "total_amount",
+  "total_qty",
+  "overall_discount_type",
+  "overall_discount",
+  "grand_total",
+  "received_amount",
+  "balance_amount"
+ ],
+ "fields": [
+  {
+   "fieldname": "client_name",
+   "fieldtype": "Link",
+   "in_list_view": 1,
+   "label": "Client Name",
+   "options": "Customer",
+   "reqd": 1
+  },
+  {
+   "fieldname": "billing_name",
+   "fieldtype": "Data",
+   "label": "Billing Name",
+   "reqd": 1
+  },
+  {
+   "fieldname": "column_break_nfoe",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "ref_no",
+   "fieldtype": "Data",
+   "in_list_view": 1,
+   "label": "Ref no",
+   "reqd": 1,
+   "unique": 1
+  },
+  {
+   "fieldname": "section_break_wbpo",
+   "fieldtype": "Section Break",
+   "label": "Items"
+  },
+  {
+   "fieldname": "table_qecz",
+   "fieldtype": "Table",
+   "options": "Invoice Items"
+  },
+  {
+   "fieldname": "section_break_mzdp",
+   "fieldtype": "Section Break"
+  },
+  {
+   "fieldname": "overall_discount_type",
+   "fieldtype": "Select",
+   "label": " Overall Discount Type",
+   "options": "\nFlat\nPercentage"
+  },
+  {
+   "fieldname": "overall_discount",
+   "fieldtype": "Float",
+   "label": " Overall Discount",
+   "precision": "2"
+  },
+  {
+   "fieldname": "grand_total",
+   "fieldtype": "Float",
+   "label": "Grand Total",
+   "precision": "2",
+   "read_only": 1
+  },
+  {
+   "fieldname": "attach",
+   "fieldtype": "Attach",
+   "label": "Add Files"
+  },
+  {
+   "fieldname": "description",
+   "fieldtype": "Small Text",
+   "label": "Description"
+  },
+  {
+   "fieldname": "column_break_ofbd",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "invoice_details_section",
+   "fieldtype": "Section Break",
+   "label": "Invoice Details"
+  },
+  {
+   "fieldname": "total_qty",
+   "fieldtype": "Float",
+   "label": "Total Quantity",
+   "read_only": 1
+  },
+  {
+   "fieldname": "total_amount",
+   "fieldtype": "Float",
+   "label": "Total Amount",
+   "read_only": 1
+  },
+  {
+   "fieldname": "invoice_date",
+   "fieldtype": "Date",
+   "in_list_view": 1,
+   "label": "Invoice Date",
+   "reqd": 1
+  },
+  {
+   "fieldname": "phone_number",
+   "fieldtype": "Phone",
+   "label": "Phone Number",
+   "reqd": 1
+  },
+  {
+   "fieldname": "payment_terms",
+   "fieldtype": "Select",
+   "label": "Payment Terms",
+   "options": "Select Payment terms\nNext day Payment\nDue On Receipt\n15 days\n30 days\n60 days\n1 Year"
+  },
+  {
+   "fieldname": "po_no",
+   "fieldtype": "Data",
+   "label": "PO No"
+  },
+  {
+   "fieldname": "po_date",
+   "fieldtype": "Date",
+   "label": "PO Date"
+  },
+  {
+   "fieldname": "due_date",
+   "fieldtype": "Date",
+   "label": "Due Date",
+   "reqd": 1
+  },
+  {
+   "fieldname": "received_amount",
+   "fieldtype": "Float",
+   "label": "Received Amount",
+   "read_only": 1
+  },
+  {
+   "fieldname": "balance_amount",
+   "fieldtype": "Float",
+   "label": "Balance Amount",
+   "read_only": 1
+  }
+ ],
+ "grid_page_length": 50,
+ "index_web_pages_for_search": 1,
+ "links": [],
+ "modified": "2025-09-20 15:59:18.784170",
+ "modified_by": "Administrator",
+ "module": "Company",
+ "name": "Invoice",
+ "naming_rule": "By fieldname",
+ "owner": "Administrator",
+ "permissions": [
+  {
+   "create": 1,
+   "delete": 1,
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "System Manager",
+   "share": 1,
+   "write": 1
+  },
+  {
+   "create": 1,
+   "delete": 1,
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "IT",
+   "share": 1,
+   "write": 1
+  },
+  {
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "Sales",
+   "share": 1
+  }
+ ],
+ "row_format": "Dynamic",
+ "sort_field": "creation",
+ "sort_order": "DESC",
+ "states": []
+}

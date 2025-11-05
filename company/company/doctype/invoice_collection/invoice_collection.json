@@ -1,0 +1,111 @@
+{
+ "actions": [],
+ "allow_rename": 1,
+ "autoname": "INVC.#####",
+ "creation": "2025-09-20 12:40:45.095523",
+ "doctype": "DocType",
+ "engine": "InnoDB",
+ "field_order": [
+  "invoice",
+  "collection_date",
+  "amount_to_pay",
+  "amount_collected",
+  "amount_pending",
+  "column_break_wmma",
+  "customer",
+  "mode_of_payment",
+  "section_break_ybiw",
+  "remarks"
+ ],
+ "fields": [
+  {
+   "fieldname": "invoice",
+   "fieldtype": "Link",
+   "in_list_view": 1,
+   "label": "Invoice",
+   "options": "Invoice",
+   "reqd": 1
+  },
+  {
+   "fieldname": "customer",
+   "fieldtype": "Link",
+   "in_list_view": 1,
+   "label": "Customer",
+   "options": "Customer",
+   "reqd": 1
+  },
+  {
+   "fieldname": "collection_date",
+   "fieldtype": "Date",
+   "in_list_view": 1,
+   "label": "Collection Date",
+   "reqd": 1
+  },
+  {
+   "fieldname": "amount_collected",
+   "fieldtype": "Currency",
+   "label": "Amount Collected",
+   "reqd": 1
+  },
+  {
+   "fieldname": "mode_of_payment",
+   "fieldtype": "Select",
+   "in_list_view": 1,
+   "label": "Mode of Payment",
+   "options": "Select Mode\nUPI\nBank Transfer\nCash",
+   "reqd": 1
+  },
+  {
+   "fieldname": "remarks",
+   "fieldtype": "Small Text",
+   "label": "Remarks"
+  },
+  {
+   "fieldname": "amount_pending",
+   "fieldtype": "Currency",
+   "label": "Amount Pending",
+   "read_only": 1
+  },
+  {
+   "fieldname": "amount_to_pay",
+   "fieldtype": "Currency",
+   "label": "Amount to Pay",
+   "read_only": 1
+  },
+  {
+   "fieldname": "column_break_wmma",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "section_break_ybiw",
+   "fieldtype": "Section Break"
+  }
+ ],
+ "grid_page_length": 50,
+ "index_web_pages_for_search": 1,
+ "links": [],
+ "modified": "2025-10-30 14:23:53.870199",
+ "modified_by": "Administrator",
+ "module": "Company",
+ "name": "Invoice Collection",
+ "naming_rule": "Expression (old style)",
+ "owner": "Administrator",
+ "permissions": [
+  {
+   "create": 1,
+   "delete": 1,
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "System Manager",
+   "share": 1,
+   "write": 1
+  }
+ ],
+ "row_format": "Dynamic",
+ "sort_field": "creation",
+ "sort_order": "DESC",
+ "states": []
+}
