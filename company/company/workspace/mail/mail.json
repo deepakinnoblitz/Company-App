@@ -1,0 +1,37 @@
+{
+ "app": "company",
+ "charts": [],
+ "content": "[{\"type\":\"header\",\"data\":{\"text\":\"Mail\"}}]",
+ "creation": "2025-12-31 14:57:18.322817",
+ "custom_blocks": [],
+ "docstatus": 0,
+ "doctype": "Workspace",
+ "external_link": "http://erp.localhost.innoblitz:8013/app/communication/view/inbox/",
+ "for_user": "",
+ "hide_custom": 0,
+ "icon": "mail",
+ "idx": 0,
+ "indicator_color": "green",
+ "is_hidden": 0,
+ "label": "Mail",
+ "link_type": "DocType",
+ "links": [],
+ "modified": "2026-01-09 15:29:57.807925",
+ "modified_by": "Administrator",
+ "module": "Company",
+ "name": "Mail",
+ "number_cards": [],
+ "owner": "Administrator",
+ "parent_page": "",
+ "public": 1,
+ "quick_lists": [],
+ "roles": [
+  {
+   "role": "HR"
+  }
+ ],
+ "sequence_id": 28.0,
+ "shortcuts": [],
+ "title": "Mail",
+ "type": "URL"
+}

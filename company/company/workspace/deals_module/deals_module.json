@@ -1,0 +1,42 @@
+{
+ "app": "company",
+ "charts": [],
+ "content": "[{\"type\":\"header\",\"data\":{\"text\":\"Deals Module\"}}]",
+ "creation": "2025-12-12 17:21:47.047626",
+ "custom_blocks": [],
+ "docstatus": 0,
+ "doctype": "Workspace",
+ "for_user": "",
+ "hide_custom": 0,
+ "icon": "hr",
+ "idx": 0,
+ "indicator_color": "green",
+ "is_hidden": 0,
+ "label": "Deals Module",
+ "link_type": "DocType",
+ "links": [],
+ "modified": "2026-01-10 10:48:16.795030",
+ "modified_by": "Administrator",
+ "module": "Company",
+ "name": "Deals Module",
+ "number_cards": [],
+ "owner": "Administrator",
+ "parent_page": "",
+ "public": 1,
+ "quick_lists": [],
+ "roles": [
+  {
+   "role": "CRM User"
+  },
+  {
+   "role": "Sales"
+  },
+  {
+   "role": "CRM And Sales"
+  }
+ ],
+ "sequence_id": 34.0,
+ "shortcuts": [],
+ "title": "Deals Module",
+ "type": "Workspace"
+}

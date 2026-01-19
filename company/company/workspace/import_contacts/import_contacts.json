@@ -1,0 +1,43 @@
+{
+ "app": "frappe",
+ "charts": [],
+ "content": "[{\"type\":\"header\",\"data\":{\"text\":\"Import Contacts\"}}]",
+ "creation": "2025-12-12 17:25:10.287966",
+ "custom_blocks": [],
+ "docstatus": 0,
+ "doctype": "Workspace",
+ "external_link": "http://erp.localhost.innoblitz:8013/app/data-import?reference_doctype=Contact",
+ "for_user": "",
+ "hide_custom": 0,
+ "icon": "upload",
+ "idx": 0,
+ "indicator_color": "green",
+ "is_hidden": 0,
+ "label": "Import Contacts",
+ "link_type": "DocType",
+ "links": [],
+ "modified": "2026-01-09 15:30:30.378172",
+ "modified_by": "Administrator",
+ "module": "Company",
+ "name": "Import Contacts",
+ "number_cards": [],
+ "owner": "Administrator",
+ "parent_page": "Contact Module",
+ "public": 1,
+ "quick_lists": [],
+ "roles": [
+  {
+   "role": "CRM User"
+  },
+  {
+   "role": "Sales"
+  },
+  {
+   "role": "CRM And Sales"
+  }
+ ],
+ "sequence_id": 68.0,
+ "shortcuts": [],
+ "title": "Import Contacts",
+ "type": "URL"
+}
