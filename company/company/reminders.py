@@ -703,3 +703,14 @@ def force_send_meet_queue(queue_name):
 
     # Process immediately
     process_meet_queue_item(queue)
+
+
+@frappe.whitelist()
+def delete_call_reminder_queue(call_name):
+    """
+    Delete all reminder queues for a specific Call.
+    This is used when user wants to delete a Call with active reminders.
+    """
+    delete_pending_queue("Calls", call_name)
+    frappe.db.commit()
+    return {"status": "success", "message": "Reminder queue deleted"}

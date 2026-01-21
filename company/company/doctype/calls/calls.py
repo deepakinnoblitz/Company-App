@@ -63,6 +63,35 @@ class Calls(Document):
                 event.status = "Completed"
                 event.save(ignore_permissions=True)
 
+    def on_trash(self):
+        """
+        Handle Call deletion.
+        - Always delete reminder queues
+        - Unlink Events (frontend handles whether to delete them separately)
+        """
+        # Unlink any linked Events (set reference fields to None)
+        # This prevents the "Cannot delete because linked" error
+        linked_events = frappe.get_all(
+            "Event",
+            filters={
+                "reference_doctype": "Calls",
+                "reference_docname": self.name
+            },
+            pluck="name"
+        )
+        
+        for event_name in linked_events:
+            frappe.db.set_value("Event", event_name, {
+                "reference_doctype": None,
+                "reference_docname": None
+            }, update_modified=False)
+        
+        # Delete any pending reminder queues
+        from company.company.reminders import delete_pending_queue
+        delete_pending_queue("Calls", self.name)
+        
+        frappe.db.commit()
+
 
 def create_event_for_call(doc):
     """Creates Calendar Event automatically from Call."""
