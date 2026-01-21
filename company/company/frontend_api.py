@@ -936,3 +936,129 @@ def upload_profile_image():
         return {"status": "failed", "message": str(e)}
  
  
+@frappe.whitelist()
+def get_financial_totals():
+    """
+    Fetch financial totals for Invoices, Estimations, Purchases, and Expenses.
+    Includes total amount, count, and 7-day trend chart data.
+    """
+    data = {}
+    
+    # Get last 7 days for chart
+    days = []
+    for i in range(6, -1, -1):
+        date = frappe.utils.add_days(frappe.utils.nowdate(), -i)
+        day_name = frappe.utils.get_datetime(date).strftime('%a')
+        days.append(day_name)
+    
+    # 1. Invoices
+    try:
+        invoices_total = frappe.db.sql("""
+            SELECT SUM(grand_total) as total, COUNT(*) as count
+            FROM `tabInvoice`
+        """, as_dict=True)[0]
+        
+        # Chart data for last 7 days (count of invoices created each day)
+        invoice_chart = []
+        for i in range(6, -1, -1):
+            date = frappe.utils.add_days(frappe.utils.nowdate(), -i)
+            count = frappe.db.sql("""
+                SELECT COUNT(*) as count
+                FROM `tabInvoice`
+                WHERE DATE(invoice_date) = %s
+            """, (date,), as_dict=True)[0]
+            invoice_chart.append(count.get('count') or 0)
+        
+        data["invoices"] = {
+            "total": frappe.utils.flt(invoices_total.get('total') or 0),
+            "count": invoices_total.get('count') or 0,
+            "chart": invoice_chart
+        }
+    except Exception as e:
+        frappe.log_error(f"Error fetching invoice totals: {str(e)}")
+        data["invoices"] = {"total": 0, "count": 0, "chart": [0]*7}
+    
+    # 2. Estimations
+    try:
+        estimations_total = frappe.db.sql("""
+            SELECT SUM(grand_total) as total, COUNT(*) as count
+            FROM `tabEstimation`
+        """, as_dict=True)[0]
+        
+        # Chart data for last 7 days (count of estimations created each day)
+        estimation_chart = []
+        for i in range(6, -1, -1):
+            date = frappe.utils.add_days(frappe.utils.nowdate(), -i)
+            count = frappe.db.sql("""
+                SELECT COUNT(*) as count
+                FROM `tabEstimation`
+                WHERE DATE(estimate_date) = %s
+            """, (date,), as_dict=True)[0]
+            estimation_chart.append(count.get('count') or 0)
+        
+        data["estimations"] = {
+            "total": frappe.utils.flt(estimations_total.get('total') or 0),
+            "count": estimations_total.get('count') or 0,
+            "chart": estimation_chart
+        }
+    except Exception as e:
+        frappe.log_error(f"Error fetching estimation totals: {str(e)}")
+        data["estimations"] = {"total": 0, "count": 0, "chart": [0]*7}
+    
+    # 3. Purchases
+    try:
+        purchases_total = frappe.db.sql("""
+            SELECT SUM(grand_total) as total, COUNT(*) as count
+            FROM `tabPurchase`
+        """, as_dict=True)[0]
+        
+        # Chart data for last 7 days (count of purchases created each day)
+        purchase_chart = []
+        for i in range(6, -1, -1):
+            date = frappe.utils.add_days(frappe.utils.nowdate(), -i)
+            count = frappe.db.sql("""
+                SELECT COUNT(*) as count
+                FROM `tabPurchase`
+                WHERE DATE(purchase_date) = %s
+            """, (date,), as_dict=True)[0]
+            purchase_chart.append(count.get('count') or 0)
+        
+        data["purchases"] = {
+            "total": frappe.utils.flt(purchases_total.get('total') or 0),
+            "count": purchases_total.get('count') or 0,
+            "chart": purchase_chart
+        }
+    except Exception as e:
+        frappe.log_error(f"Error fetching purchase totals: {str(e)}")
+        data["purchases"] = {"total": 0, "count": 0, "chart": [0]*7}
+    
+    # 4. Expenses
+    try:
+        expenses_total = frappe.db.sql("""
+            SELECT SUM(total) as total, COUNT(*) as count
+            FROM `tabExpenses`
+        """, as_dict=True)[0]
+        
+        # Chart data for last 7 days (count of expenses created each day)
+        expense_chart = []
+        for i in range(6, -1, -1):
+            date = frappe.utils.add_days(frappe.utils.nowdate(), -i)
+            count = frappe.db.sql("""
+                SELECT COUNT(*) as count
+                FROM `tabExpenses`
+                WHERE DATE(date) = %s
+            """, (date,), as_dict=True)[0]
+            expense_chart.append(count.get('count') or 0)
+        
+        data["expenses"] = {
+            "total": frappe.utils.flt(expenses_total.get('total') or 0),
+            "count": expenses_total.get('count') or 0,
+            "chart": expense_chart
+        }
+    except Exception as e:
+        frappe.log_error(f"Error fetching expense totals: {str(e)}")
+        data["expenses"] = {"total": 0, "count": 0, "chart": [0]*7}
+    
+    data["categories"] = days
+    
+    return data
