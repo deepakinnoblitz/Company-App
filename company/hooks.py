@@ -124,8 +124,15 @@ def safe_print(*args, **kwargs):
 builtins.print = safe_print
 
 
-extend_bootinfo = "company.company.api.extend_bootinfo"
+# Website Route Rules
+# -------------------
+# Handle client-side routing for React SPA
+website_route_rules = [
+    {"from_route": "/crm/<path:app_path>", "to_route": "crm"},
+]
 
+
+extend_bootinfo = "company.company.api.extend_bootinfo"
 
 
 # Apps

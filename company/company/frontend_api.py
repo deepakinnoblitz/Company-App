@@ -1062,3 +1062,34 @@ def get_financial_totals():
     data["categories"] = days
     
     return data
+
+@frappe.whitelist()
+def get_crm_expense_tracker_stats(start_date=None, end_date=None):
+    """
+    Get dashboard stats for CRM Expense Tracker.
+    Calculates total income, total expense and balance based on the period.
+    """
+    filters = {}
+    if start_date and end_date:
+        filters["date_time"] = ["between", [start_date, end_date]]
+
+    stats = {
+        "total_income": 0,
+        "total_expense": 0,
+        "balance": 0
+    }
+
+    try:
+        data = frappe.get_all("CRM Expense Tracker", filters=filters, fields=["type", "amount"])
+        
+        for d in data:
+            if d.type == "Income":
+                stats["total_income"] += frappe.utils.flt(d.amount)
+            elif d.type == "Expense":
+                stats["total_expense"] += frappe.utils.flt(d.amount)
+        
+        stats["balance"] = stats["total_income"] - stats["total_expense"]
+    except Exception as e:
+        frappe.log_error(f"Error fetching CRM Expense Tracker stats: {str(e)}")
+        
+    return stats

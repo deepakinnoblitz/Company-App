@@ -29,7 +29,8 @@
    "fieldtype": "Link",
    "in_list_view": 1,
    "label": "Service",
-   "options": "Item"
+   "options": "Item",
+   "reqd": 1
   },
   {
    "fieldname": "hsn_code",
@@ -134,7 +135,7 @@
  "index_web_pages_for_search": 1,
  "istable": 1,
  "links": [],
- "modified": "2026-01-10 14:56:29.696353",
+ "modified": "2026-01-27 15:48:26.442518",
  "modified_by": "Administrator",
  "module": "Company",
  "name": "Estimation Items",
