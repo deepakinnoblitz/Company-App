@@ -11,6 +11,7 @@
   "account",
   "contact",
   "type",
+  "source_lead",
   "next_step",
   "column_break",
   "value",
@@ -18,7 +19,6 @@
   "stage",
   "probability",
   "deal_owner",
-  "source_lead",
   "notes",
   "section_break_zxam",
   "owner_name"
@@ -78,9 +78,9 @@
   },
   {
    "fieldname": "source_lead",
-   "fieldtype": "Link",
+   "fieldtype": "Select",
    "label": "Source Lead",
-   "options": "Lead"
+   "options": "Advertisement\nCold Call\nEmployee Referral\nExternal Referral\nOnline Store\nWebsite\nSocial Media\nEmail Campaign\nWalk In\nTrade Show / Event\nPartner\nDistributor\nTelemarketing\nExisting Customer\nRepeat Customer\nDirect Mail\nMarketplace\nGoogle Ads\nFacebook / Instagram Ads\nLinkedIn\nWhatsApp\nCustomer Support\nInbound Call\nOutbound Call\nOther"
   },
   {
    "fieldname": "notes",
@@ -120,7 +120,7 @@
  "grid_page_length": 50,
  "index_web_pages_for_search": 1,
  "links": [],
- "modified": "2026-01-10 11:08:05.050475",
+ "modified": "2026-01-27 12:17:13.000539",
  "modified_by": "Administrator",
  "module": "Company",
  "name": "Deal",

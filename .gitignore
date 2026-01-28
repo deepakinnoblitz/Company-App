@@ -56,3 +56,6 @@ jspm_packages/
 
 # Frontend
 company/frontend
+company/public/crm/
+company/www/crm.html
+company/www/crm.py
