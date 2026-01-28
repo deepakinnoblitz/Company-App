@@ -438,12 +438,13 @@ def get_doc_fields(doctype):
     fields = []
 
     # Add Name/ID field
-    fields.append({
-        "fieldname": "name",
-        "label": _("ID"),
-        "fieldtype": "Data",
-        "reqd": 0
-    })
+    if doctype not in ("Lead", "Contacts", "Accounts"):
+        fields.append({
+            "fieldname": "name",
+            "label": _("ID"),
+            "fieldtype": "Data",
+            "reqd": 0
+        })
 
     # Add Owner field
     fields.append({
@@ -470,23 +471,88 @@ def get_doc_fields(doctype):
 def download_import_template(doctype):
     """
     Generate and download a blank import template for a given DocType.
+    Customized to force Phone columns as "Text" in Excel.
     """
     import json
+    import openpyxl
+    from io import BytesIO
+    from openpyxl.styles import Font
+    from openpyxl.utils import get_column_letter
+    from frappe.core.doctype.data_import.exporter import Exporter
+    from frappe.desk.utils import provide_binary_file
+
     if not frappe.has_permission(doctype, "read"):
         frappe.throw(_("Not permitted"), frappe.PermissionError)
 
-    from frappe.core.doctype.data_import.data_import import download_template
-    
     meta = frappe.get_meta(doctype)
     # Get relevant fields for the template (mandatory + common)
     fields = [df.fieldname for df in meta.fields if (df.reqd or df.in_list_view) and df.fieldtype not in ("Section Break", "Column Break", "Tab Break", "HTML", "Button") and not df.hidden]
     
-    if "name" not in fields:
+    # Ensure requested fields are included for Lead
+    if doctype == "Lead":
+        extra_fields = ["gstin", "phone_number", "billing_address", "remarks"]
+        for f in extra_fields:
+            if f not in fields:
+                fields.append(f)
+    
+    # Ensure requested fields are included for Contacts
+    if doctype == "Contacts":
+        extra_fields = ["customer_type", "designation", "address", "notes"]
+        for f in extra_fields:
+            if f not in fields:
+                fields.append(f)
+    
+    # Ensure requested fields are included for Accounts
+    if doctype == "Accounts":
+        extra_fields = ["gstin", "website"]
+        for f in extra_fields:
+            if f not in fields:
+                fields.append(f)
+    
+    if "name" not in fields and doctype not in ("Lead", "Contacts", "Accounts"):
         fields.insert(0, "name")
 
     export_fields = {doctype: fields}
     
-    return download_template(doctype, export_fields=json.dumps(export_fields), export_records="blank_template", file_type="Excel")
+    # Use standard Exporter to get the template structure
+    e = Exporter(
+        doctype,
+        export_fields=export_fields,
+        export_data=False,
+        file_type="Excel"
+    )
+    csv_array = e.get_csv_array_for_export()
+    
+    # Create Workbook manually to set formatting
+    wb = openpyxl.Workbook()
+    ws = wb.active
+    ws.title = doctype[:30] # Excel sheet name limit
+
+    header = csv_array[0]
+    phone_indices = [i for i, label in enumerate(header) if "(+91-)" in label]
+
+    for row_idx, row_data in enumerate(csv_array):
+        # We need to handle list length consistency
+        ws.append(row_data)
+        
+        # Format Header
+        if row_idx == 0:
+            for cell in ws[1]:
+                cell.font = Font(bold=True)
+        
+    # Set column format to Text (@) for phone columns
+    # We apply this to the first 100 rows to ensure user input is caught as text
+    for col_idx in phone_indices:
+        col_letter = get_column_letter(col_idx + 1)
+        for r in range(1, 101):
+            ws.cell(row=r, column=col_idx + 1).number_format = "@"
+            
+    # Save to buffer
+    xlsx_file = BytesIO()
+    wb.save(xlsx_file)
+    
+    # Provide binary response
+    provide_binary_file(doctype, "xlsx", xlsx_file.getvalue())
 
 
 @frappe.whitelist()
