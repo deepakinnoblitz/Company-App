@@ -62,7 +62,7 @@
         },
         {
             "fieldname": "phone_number",
-            "fieldtype": "Data",
+            "fieldtype": "Phone",
             "label": "Phone Number (+91-)"
         },
         {

@@ -29,7 +29,7 @@
         },
         {
             "fieldname": "phone_number",
-            "fieldtype": "Data",
+            "fieldtype": "Phone",
             "in_list_view": 1,
             "label": "Phone Number (+91-)"
         },
