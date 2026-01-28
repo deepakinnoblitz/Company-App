@@ -60,9 +60,9 @@
   },
   {
    "fieldname": "tax_type",
-   "fieldtype": "Select",
+   "fieldtype": "Link",
    "label": "Tax Type",
-   "options": "Select TaxType\nGST@18%\nGST@28%\nGST@0%\nIGST@18%\nIGST@28%\nGST@12%\nIGST@12%\nGST@3%\nGST@5%\nIGST@5%\nIGST@3%\nEXEMPTED\nGST@27%"
+   "options": "Tax Types"
   },
   {
    "fieldname": "tax_amount",
@@ -83,7 +83,7 @@
  "index_web_pages_for_search": 1,
  "istable": 1,
  "links": [],
- "modified": "2025-09-24 11:49:50.283598",
+ "modified": "2026-01-12 12:25:49.565880",
  "modified_by": "Administrator",
  "module": "Company",
  "name": "Purchase Items",

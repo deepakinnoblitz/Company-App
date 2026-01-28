@@ -10,7 +10,7 @@
  "idx": 0,
  "is_standard": "Yes",
  "letterhead": null,
- "modified": "2025-09-22 15:03:06.597647",
+ "modified": "2025-11-24 12:08:18.732926",
  "modified_by": "Administrator",
  "module": "Company",
  "name": "Sales Report",
@@ -19,6 +19,16 @@
  "ref_doctype": "Invoice",
  "report_name": "Sales Report",
  "report_type": "Script Report",
- "roles": [],
+ "roles": [
+  {
+   "role": "Sales"
+  },
+  {
+   "role": "Sales Employee"
+  },
+  {
+   "role": "All"
+  }
+ ],
  "timeout": 0
 }

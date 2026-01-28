@@ -6,22 +6,24 @@
  "doctype": "DocType",
  "engine": "InnoDB",
  "field_order": [
+  "leads_details_section",
   "lead_name",
   "gstin",
+  "phone_number",
   "email",
-  "country",
-  "billing_address",
+  "service",
   "leads_type",
-  "assigned_to",
-  "move_to_party",
+  "leads_from",
+  "remarks",
   "column_break_jxmk",
   "company_name",
-  "phone_number",
-  "service",
+  "country",
   "state",
-  "remarks",
-  "leads_from",
+  "city",
   "status",
+  "billing_address",
+  "assigned_to",
+  "move_to_party",
   "section_break_krkf",
   "followup"
  ],
@@ -90,22 +92,21 @@
    "fieldname": "leads_type",
    "fieldtype": "Select",
    "label": "Leads Type",
-   "options": "Incoming\nOutgoing",
+   "options": "\nIncoming\nOutgoing",
    "reqd": 1
   },
   {
    "fieldname": "leads_from",
-   "fieldtype": "Select",
+   "fieldtype": "Link",
    "label": "Leads from",
-   "options": "Indiamart\nJustdial\nFacebook\nInstagram\nReferral\nOur Website\nGoogle Ads",
+   "options": "Lead From",
    "reqd": 1
   },
   {
    "fieldname": "assigned_to",
    "fieldtype": "Link",
    "label": "Assigned To",
-   "options": "Employee",
-   "reqd": 1
+   "options": "Employee"
   },
   {
    "fieldname": "column_break_jxmk",
@@ -121,7 +122,7 @@
    "fieldname": "move_to_party",
    "fieldtype": "Select",
    "label": "Move to Party",
-   "options": "Move\nMoved"
+   "options": "\nMove to Customer"
   },
   {
    "fieldname": "section_break_krkf",
@@ -132,12 +133,22 @@
    "fieldtype": "Table",
    "label": "Followup ",
    "options": "Followup"
+  },
+  {
+   "fieldname": "leads_details_section",
+   "fieldtype": "Section Break",
+   "label": "Leads Details"
+  },
+  {
+   "fieldname": "city",
+   "fieldtype": "Select",
+   "label": "City"
   }
  ],
  "grid_page_length": 50,
  "index_web_pages_for_search": 1,
  "links": [],
- "modified": "2025-09-23 16:46:18.413291",
+ "modified": "2025-11-15 19:22:46.901456",
  "modified_by": "Administrator",
  "module": "Company",
  "name": "Leads",

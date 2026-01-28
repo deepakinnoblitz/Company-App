@@ -138,10 +138,31 @@ class WFHAttendance(Document):
             return datetime.combine(date.today(), t)
         frappe.throw(f"Unsupported type for time: {type(t)}")
 
+    def get_hr_settings(self):
+        """Fetch HR email and CC from Company Email Settings"""
+        settings = frappe.get_all(
+            "Company Email Settings",
+            fields=["hr_email", "hr_cc_emails"],
+            limit=1
+        )
+        if settings:
+            return settings[0]
+        return {}
+
     def notify_hr_for_approval(self):
         """Send email notification to HR when employee submits WFH Attendance"""
 
-        hr_email = "hr@innoblitz.global"
+        hr_settings = self.get_hr_settings()
+        hr_email = hr_settings.get("hr_email")
+        cc_emails = hr_settings.get("hr_cc_emails")
+
+        if not hr_email:
+            return
+
+        cc_list = []
+        if cc_emails:
+            cc_list = [e.strip() for e in cc_emails.replace("\n", ",").split(",") if e.strip()]
+
 
         # Build sleek purple-styled table
         attendance_details = f"""
@@ -218,8 +239,11 @@ class WFHAttendance(Document):
         try:
             frappe.sendmail(
                 recipients=[hr_email],
+                cc=cc_list,
                 subject=f"WFH Approval Request - {self.employee_name} ({frappe.utils.formatdate(self.date)})",
                 message=message,
+                sender=hr_email,
+                reply_to=hr_email,
                 reference_doctype=self.doctype,
                 reference_name=self.name
             )
@@ -284,10 +308,15 @@ class WFHAttendance(Document):
         </div>
         """
 
+        hr_settings = self.get_hr_settings()
+        hr_email = hr_settings.get("hr_email")
+
         frappe.sendmail(
             recipients=recipients,
             subject=f"✅ WFH Approved - {frappe.utils.formatdate(self.date)}",
             message=message,
+            sender=hr_email,
+            reply_to=hr_email,
             reference_doctype=self.doctype,
             reference_name=self.name
         )
@@ -346,10 +375,15 @@ class WFHAttendance(Document):
         </div>
         """
 
+        hr_settings = self.get_hr_settings()
+        hr_email = hr_settings.get("hr_email")
+
         frappe.sendmail(
             recipients=recipients,
             subject=f"❌ WFH Rejected - {frappe.utils.formatdate(self.date)}",
             message=message,
+            sender=hr_email,
+            reply_to=hr_email,
             reference_doctype=self.doctype,
             reference_name=self.name
         )

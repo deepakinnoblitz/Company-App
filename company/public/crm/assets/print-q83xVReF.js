@@ -1,0 +1,1 @@
+function o(t){const e=document.createElement("iframe");e.style.display="none",e.src=t,document.body.appendChild(e),e.onload=()=>{var n;(n=e.contentWindow)==null||n.print(),setTimeout(()=>{document.body.removeChild(e)},1e3)}}export{o as h};

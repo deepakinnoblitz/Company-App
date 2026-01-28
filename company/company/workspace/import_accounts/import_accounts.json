@@ -1,0 +1,43 @@
+{
+ "app": "frappe",
+ "charts": [],
+ "content": "[{\"type\":\"header\",\"data\":{\"text\":\"Import Accounts\"}}]",
+ "creation": "2025-12-12 17:26:51.089165",
+ "custom_blocks": [],
+ "docstatus": 0,
+ "doctype": "Workspace",
+ "external_link": "https://erp.innoblitz.in/app/data-import?reference_doctype=Accounts",
+ "for_user": "",
+ "hide_custom": 0,
+ "icon": "upload",
+ "idx": 0,
+ "indicator_color": "green",
+ "is_hidden": 0,
+ "label": "Import Accounts",
+ "link_type": "DocType",
+ "links": [],
+ "modified": "2026-01-08 10:58:49.554935",
+ "modified_by": "Administrator",
+ "module": "Company",
+ "name": "Import Accounts",
+ "number_cards": [],
+ "owner": "Administrator",
+ "parent_page": "Accounts Module",
+ "public": 1,
+ "quick_lists": [],
+ "roles": [
+  {
+   "role": "CRM User"
+  },
+  {
+   "role": "Sales"
+  },
+  {
+   "role": "CRM And Sales"
+  }
+ ],
+ "sequence_id": 70.0,
+ "shortcuts": [],
+ "title": "Import Accounts",
+ "type": "URL"
+}

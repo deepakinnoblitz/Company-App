@@ -2,24 +2,34 @@
 // For license information, please see license.txt
 
 frappe.query_reports["Sales Report"] = {
-	"filters": [
+    "filters": [
+
         {
-            "fieldname":"from_date",
-            "label": __("From Date"),
-            "fieldtype": "Date",
-            "default": frappe.datetime.add_months(frappe.datetime.get_today(), -1) 
+            fieldname: "from_date",
+            label: __("From Date"),
+            fieldtype: "Date",
+            reqd: 1,
+            default: frappe.datetime.add_months(frappe.datetime.get_today(), -1)
         },
         {
-            "fieldname":"to_date",
-            "label": __("To Date"),
-            "fieldtype": "Date",
-            "default": frappe.datetime.get_today()
+            fieldname: "to_date",
+            label: __("To Date"),
+            fieldtype: "Date",
+            reqd: 1,
+            default: frappe.datetime.get_today()
         },
         {
-            "fieldname":"client_name",
-            "label": __("Client Name"),
-            "fieldtype": "Link",
-            "options": "Customer"
+            fieldname: "customer",
+            label: __("Customer"),
+            fieldtype: "Link",
+            options: "Contacts",
+            reqd: 0
+        },
+        {
+            fieldname: "group_by_invoice",
+            label: __("Group by Invoice"),
+            fieldtype: "Check",
+            default: 1
         }
     ]
 };

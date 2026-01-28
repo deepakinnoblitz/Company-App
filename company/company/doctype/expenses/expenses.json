@@ -6,11 +6,14 @@
  "doctype": "DocType",
  "engine": "InnoDB",
  "field_order": [
-  "expense_category",
   "expense_no",
+  "expense_category",
+  "column_break_gvbq",
   "date",
   "payment_type",
+  "section_break_hxmz",
   "table_qecz",
+  "section_break_pjmz",
   "total",
   "description"
  ],
@@ -19,8 +22,7 @@
    "fieldname": "expense_category",
    "fieldtype": "Data",
    "in_list_view": 1,
-   "label": "Expense Category",
-   "reqd": 1
+   "label": "Expense Category"
   },
   {
    "fieldname": "expense_no",
@@ -49,7 +51,8 @@
   {
    "fieldname": "total",
    "fieldtype": "Float",
-   "label": "Total"
+   "label": "Total",
+   "read_only": 1
   },
   {
    "fieldname": "description",
@@ -61,12 +64,24 @@
    "fieldtype": "Table",
    "label": "Expenses Items",
    "options": "Expenses Items"
+  },
+  {
+   "fieldname": "column_break_gvbq",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "section_break_pjmz",
+   "fieldtype": "Section Break"
+  },
+  {
+   "fieldname": "section_break_hxmz",
+   "fieldtype": "Section Break"
   }
  ],
  "grid_page_length": 50,
  "index_web_pages_for_search": 1,
  "links": [],
- "modified": "2025-09-24 14:16:42.891457",
+ "modified": "2025-11-15 19:14:36.199071",
  "modified_by": "Administrator",
  "module": "Company",
  "name": "Expenses",

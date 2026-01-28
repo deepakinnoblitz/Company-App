@@ -13,6 +13,8 @@
   "amount_pending",
   "column_break_wmma",
   "customer",
+  "customer_name",
+  "company_name",
   "mode_of_payment",
   "section_break_ybiw",
   "remarks"
@@ -27,11 +29,12 @@
    "reqd": 1
   },
   {
+   "fetch_from": "invoice.client_name",
    "fieldname": "customer",
    "fieldtype": "Link",
    "in_list_view": 1,
-   "label": "Customer",
-   "options": "Customer",
+   "label": "Customer ID",
+   "options": "Contacts",
    "reqd": 1
   },
   {
@@ -49,10 +52,10 @@
   },
   {
    "fieldname": "mode_of_payment",
-   "fieldtype": "Select",
+   "fieldtype": "Link",
    "in_list_view": 1,
    "label": "Mode of Payment",
-   "options": "Select Mode\nUPI\nBank Transfer\nCash",
+   "options": "Payment Type",
    "reqd": 1
   },
   {
@@ -79,12 +82,26 @@
   {
    "fieldname": "section_break_ybiw",
    "fieldtype": "Section Break"
+  },
+  {
+   "fetch_from": "customer.first_name",
+   "fieldname": "customer_name",
+   "fieldtype": "Data",
+   "in_list_view": 1,
+   "label": "Customer Name"
+  },
+  {
+   "fetch_from": "customer.company_name",
+   "fieldname": "company_name",
+   "fieldtype": "Data",
+   "in_list_view": 1,
+   "label": "Company Name"
   }
  ],
  "grid_page_length": 50,
  "index_web_pages_for_search": 1,
  "links": [],
- "modified": "2025-10-30 14:23:53.870199",
+ "modified": "2026-01-08 11:38:17.561378",
  "modified_by": "Administrator",
  "module": "Company",
  "name": "Invoice Collection",

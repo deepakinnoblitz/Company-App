@@ -1,0 +1,43 @@
+{
+ "app": "company",
+ "charts": [],
+ "content": "[{\"type\":\"header\",\"data\":{\"text\":\"Accounts List\"}}]",
+ "creation": "2025-12-12 17:10:43.418828",
+ "custom_blocks": [],
+ "docstatus": 0,
+ "doctype": "Workspace",
+ "for_user": "",
+ "hide_custom": 0,
+ "icon": "liabilities",
+ "idx": 0,
+ "indicator_color": "green",
+ "is_hidden": 0,
+ "label": "Accounts List",
+ "link_to": "Accounts",
+ "link_type": "DocType",
+ "links": [],
+ "modified": "2026-01-08 11:00:05.792492",
+ "modified_by": "Administrator",
+ "module": "Company",
+ "name": "Accounts List",
+ "number_cards": [],
+ "owner": "Administrator",
+ "parent_page": "Accounts Module",
+ "public": 1,
+ "quick_lists": [],
+ "roles": [
+  {
+   "role": "CRM User"
+  },
+  {
+   "role": "Sales"
+  },
+  {
+   "role": "CRM And Sales"
+  }
+ ],
+ "sequence_id": 69.0,
+ "shortcuts": [],
+ "title": "Accounts List",
+ "type": "Link"
+}

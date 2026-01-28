@@ -1,4 +1,6 @@
 import frappe
+import json
+import os
 from frappe import _
 from frappe.utils import (
     getdate,
@@ -8,11 +10,13 @@ from frappe.utils import (
     add_months,
     flt,
     today,
-    formatdate
+    formatdate, 
+    get_date_str
 )
 from datetime import datetime, timedelta
 from calendar import monthrange
-
+from frappe.utils import get_bench_path
+from frappe.utils.file_manager import save_file
 
 # =================== ESTIMATION REFERENCE ===================
 @frappe.whitelist()
@@ -150,6 +154,75 @@ def validate_invoice_collection(doc, method):
             f"Trying to Add: {doc.amount_collected}<br><br>"
             f"Remaining Balance: {invoice.grand_total - already_collected}"
         )
+
+# =================== PURCHASE COLLECTION ===================
+@frappe.whitelist()
+def get_total_purchase_collected(purchase_name):
+    total = frappe.db.sql("""
+        SELECT SUM(amount_collected)
+        FROM `tabPurchase Collection`
+        WHERE purchase=%s
+    """, purchase_name)[0][0] or 0
+
+    return total
+
+def update_purchase_paid_balance(doc, method):
+    """
+    Update paid_amount and balance_amount in Purchase
+    whenever a Purchase Collection is inserted/updated/deleted.
+    """
+    purchase_name = doc.purchase
+    if not purchase_name:
+        return
+
+    total_collected = flt(get_total_purchase_collected(purchase_name))
+
+    grand_total = flt(frappe.db.get_value("Purchase", purchase_name, "grand_total") or 0)
+    balance = grand_total - total_collected
+    if balance < 0:
+        balance = 0
+
+    frappe.db.set_value("Purchase", purchase_name, {
+        "paid_amount": total_collected,
+        "balance_amount": balance
+    })
+
+def validate_purchase_collection(doc, method):
+    """
+    Prevent Purchase Collection from exceeding Purchase grand_total
+    """
+    if not doc.purchase:
+        return
+
+    purchase = frappe.db.get_value("Purchase", doc.purchase, ["grand_total"], as_dict=True)
+    if not purchase:
+        return
+
+    already_collected = frappe.db.sql("""
+        SELECT SUM(amount_collected)
+        FROM `tabPurchase Collection`
+        WHERE purchase=%s AND name != %s
+    """, (doc.purchase, doc.name))[0][0] or 0
+
+    new_total = flt(already_collected) + flt(doc.amount_collected)
+
+    if new_total > flt(purchase.grand_total):
+        frappe.throw(
+            f"Collection exceeds Purchase Amount.<br><br>"
+            f"Grand Total: {purchase.grand_total}<br>"
+            f"Already Collected: {already_collected}<br>"
+            f"Trying to Add: {doc.amount_collected}<br><br>"
+            f"Remaining Balance: {purchase.grand_total - already_collected}"
+        )
+
+def validate_purchase_with_collections(doc, method):
+    """
+    Prevent editing of Purchase if it has associated collections
+    """
+    if not doc.is_new():
+        if frappe.db.exists("Purchase Collection", {"purchase": doc.name}):
+            frappe.throw("This purchase already has collections. Editing is not allowed.")
+
 
 @frappe.whitelist()
 def get_todays_followups():
@@ -527,109 +600,6 @@ def generate_salary_slips_from_employee(year=None, month=None, employees=None):
             slip.insert(ignore_permissions=True)
             created_count += 1
 
-            try:
-                user_for_notification = emp.user
-
-                if user_for_notification:
-                    notification_doc = frappe.get_doc({
-                        "doctype": "Notification Log",
-                        "subject": f"Salary Slip for {month}-{year}",
-                        "email_content": f"Your salary slip for {month}-{year} has been generated.",
-                        "for_user": user_for_notification,
-                        "document_type": "Salary Slip",
-                        "document_name": slip.name,
-                        "from_user": frappe.session.user,
-                        "type": "Alert",
-                        "seen": 0,  # 🔥 mark as unread so it shows in the bell icon
-                    })
-                    notification_doc.insert(ignore_permissions=True)
-
-                    # 🔥 Refresh the notification bell in real-time
-                    frappe.publish_realtime(
-                        event="notification",
-                        message={"type": "New Notification"},
-                        user=user_for_notification,
-                        after_commit=True
-                    )
-
-            except Exception as e:
-                frappe.log_error(frappe.get_traceback(), "Salary Slip Notification Error")
-
-            # --- Firebase Push Notification ---
-            from company.company.api import send_push_notification_to_user
-
-            try:
-                if emp.user:
-                    result = send_push_notification_to_user(
-                        user=emp.user,
-                        title=f"Salary Slip for {month}-{year}",
-                        body=f"Your salary slip for {month}-{year} has been generated successfully.",
-                        data={"salary_slip": slip.name}
-                    )
-
-                    # ✅ Log success for debugging
-                    frappe.log_error(
-                        message=f"Push notification sent successfully to user: {emp.user}\nFCM response: {result}",
-                        title=f"Firebase Push Success for {emp.name}"
-                    )
-
-            except Exception as e:
-                frappe.log_error(
-                    message=f"Error while sending push notification: {str(e)}",
-                    title=f"Firebase Push Error for {emp.name}"
-                )
-
-            try:
-                recipients = []
-                if emp.email:
-                    recipients.append(emp.email)
-                if emp.personal_email:
-                    recipients.append(emp.personal_email)
-
-                if recipients:
-                    print_format = frappe.get_meta("Salary Slip").default_print_format or "Standard"
-                    pdf_content = frappe.get_print(
-                        "Salary Slip",
-                        slip.name,
-                        print_format=print_format,
-                        as_pdf=True
-                    )
-
-                    # HTML email with inline styles
-                    message = f"""
-                    <div style="font-family: 'Montserrat', 'Segoe UI', Arial, sans-serif; background:#f4f6f8; padding:30px;">
-                        <div style="max-width:600px; margin:auto; background:white; border-radius:12px; 
-                                    box-shadow:0 2px 8px rgba(0,0,0,0.08); overflow:hidden;">
-                            
-                            <div style="background:#007bff; color:white; padding:18px 24px; font-size:18px; font-weight:600; text-align:center;">
-                                Your Salary Slip for {month}-{year}
-                            </div>
-
-                            <div style="padding:24px; color:#333; font-size:14px; line-height:1.6;">
-                                <p>Dear <b>{emp.employee_name}</b>,</p>
-                                <p>Your salary slip for <b>{month}-{year}</b> has been generated. Please find the attached PDF below.</p>
-
-                                <p style="margin-top:20px;">Best regards,<br>
-                                <b style="color:#007bff;">HR Team</b></p>
-                            </div>
-                        </div>
-                    </div>
-                    """
-
-                    frappe.sendmail(
-                        recipients=recipients,
-                        subject=f"Salary Slip for {month}-{year}",
-                        message=message,
-                        attachments=[{
-                            "fname": f"Salary_Slip_{emp.name}_{year}_{month}.pdf",
-                            "fcontent": pdf_content
-                        }],
-                        reference_doctype="Salary Slip",
-                        reference_name=slip.name
-                    )
-            except Exception as e:
-                frappe.log_error(message=str(e), title=f"Email Error for {emp.name}")
-
         except Exception as e:
             errors.append(f"Error for {emp.name}: {str(e)}")
 
@@ -639,6 +609,118 @@ def generate_salary_slips_from_employee(year=None, month=None, employees=None):
 
     return result_msg
 
+@frappe.whitelist()
+def salary_slip_after_submit(doc, method):
+    """Triggered automatically when a Salary Slip is submitted (approved)."""
+
+    try:
+        # Get Month-Year for display
+        month_year = frappe.utils.formatdate(doc.pay_period_start, "MMMM yyyy")
+
+        # -------------------------
+        # 1️⃣ Create Notification Log
+        # -------------------------
+        if doc.user:
+            notification_doc = frappe.get_doc({
+                "doctype": "Notification Log",
+                "subject": f"Salary Slip for {month_year}",
+                "email_content": f"Your salary slip for {month_year} has been approved.",
+                "for_user": doc.user,
+                "document_type": "Salary Slip",
+                "document_name": doc.name,
+                "from_user": frappe.session.user,
+                "type": "Alert",
+                "seen": 0,
+            })
+            notification_doc.insert(ignore_permissions=True)
+
+            # Real-time bell refresh
+            frappe.publish_realtime(
+                event="notification",
+                message={"type": "New Notification"},
+                user=doc.user,
+                after_commit=True
+            )
+
+    except Exception:
+        frappe.log_error(frappe.get_traceback(), "Salary Slip Notification Error")
+
+    # -------------------------
+    # 2️⃣ Firebase Push Notification
+    # -------------------------
+    try:
+        from company.company.api import send_push_notification_to_user
+
+        if doc.user:
+            result = send_push_notification_to_user(
+                user=doc.user,
+                title=f"Salary Slip for {month_year}",
+                body=f"Your salary slip for {month_year} has been approved successfully.",
+                data={"salary_slip": doc.name}
+            )
+
+            frappe.log_error(
+                message=f"Push notification sent successfully to {doc.user}\nResponse: {result}",
+                title=f"Firebase Push Success for {doc.employee_name}"
+            )
+
+    except Exception as e:
+        frappe.log_error(
+            message=f"Error while sending push notification: {str(e)}",
+            title=f"Firebase Push Error for {doc.employee_name}"
+        )
+
+    # -------------------------
+    # 3️⃣ Email Notification
+    # -------------------------
+    try:
+        recipients = []
+        if doc.email:
+            recipients.append(doc.email)
+        if doc.personal_email:
+            recipients.append(doc.personal_email)
+
+        if recipients:
+            print_format = frappe.get_meta("Salary Slip").default_print_format or "Standard"
+            pdf_content = frappe.get_print(
+                "Salary Slip",
+                doc.name,
+                print_format=print_format,
+                as_pdf=True
+            )
+
+            message = f"""
+            <div style="font-family: 'Montserrat', 'Segoe UI', Arial, sans-serif; background:#f4f6f8; padding:30px;">
+                <div style="max-width:600px; margin:auto; background:white; border-radius:12px;
+                            box-shadow:0 2px 8px rgba(0,0,0,0.08); overflow:hidden;">
+                    <div style="background:#007bff; color:white; padding:18px 24px; font-size:18px; font-weight:600; text-align:center;">
+                        Your Salary Slip for {month_year}
+                    </div>
+                    <div style="padding:24px; color:#333; font-size:14px; line-height:1.6;">
+                        <p>Dear <b>{doc.employee_name}</b>,</p>
+                        <p>Your salary slip for <b>{month_year}</b> has been Released. Please find the attached PDF below.</p>
+                        <p style="margin-top:20px;">Best regards,<br>
+                        <b style="color:#007bff;">HR Team</b></p>
+                    </div>
+                </div>
+            </div>
+            """
+
+            frappe.sendmail(
+                recipients=recipients,
+                subject=f"Salary Slip for {month_year}",
+                message=message,
+                attachments=[{
+                    "fname": f"Salary_Slip_{doc.employee}_{month_year}.pdf",
+                    "fcontent": pdf_content
+                }],
+                reference_doctype="Salary Slip",
+                reference_name=doc.name
+            )
+
+    except Exception as e:
+        frappe.log_error(message=str(e), title=f"Email Error for {doc.employee_name}")
+        
 
 def get_holiday_dates_for_month(year, month):
     """
@@ -736,24 +818,53 @@ def fetch_salary_slips(start_date, end_date):
 
     return employee_rows
 
+# @frappe.whitelist()
+# def get_today_leave_employees():
+#     """
+#     Returns a list of employees who are on leave today
+#     """
+#     today_date = getdate(today())
+
+#     leave_apps = frappe.get_all(
+#         "Leave Application",
+#         filters={
+#             "workflow_state": "Approved",
+#             "from_date": ["<=", today_date],
+#             "to_date": [">=", today_date],
+#         },
+#         fields=["employee", "employee_name", "leave_type", "from_date", "to_date"]
+#     )
+
+#      # Convert dates to string so JS can handle
+#     for app in leave_apps:
+#         app["from_date"] = str(app["from_date"])
+#         app["to_date"] = str(app["to_date"])
+
+#     return leave_apps
+
 @frappe.whitelist()
 def get_today_leave_employees():
     """
-    Returns a list of employees who are on leave today
+    Returns a list of employees who are on approved leave today,
+    only for Sick Leave - Paid and Unpaid Leave
     """
+
     today_date = getdate(today())
+
+    allowed_leave_types = ["Sick Leave - Paid", "Unpaid Leave"]
 
     leave_apps = frappe.get_all(
         "Leave Application",
         filters={
             "workflow_state": "Approved",
+            "leave_type": ["in", allowed_leave_types],
             "from_date": ["<=", today_date],
             "to_date": [">=", today_date],
         },
         fields=["employee", "employee_name", "leave_type", "from_date", "to_date"]
     )
 
-     # Convert dates to string so JS can handle
+    # Convert dates to string for JS
     for app in leave_apps:
         app["from_date"] = str(app["from_date"])
         app["to_date"] = str(app["to_date"])
@@ -855,7 +966,7 @@ def update_leave_allocation_from_attendance(doc, method=None):
 
 
 @frappe.whitelist()
-def check_leave_balance(employee, leave_type, from_date, to_date, permission_hours=None):
+def check_leave_balance(employee, leave_type, from_date, to_date, permission_hours=None, half_day=False):
     """
     Check available leave balance for given employee and leave type.
     Returns {"allowed": True/False, "remaining": <float>}
@@ -863,6 +974,7 @@ def check_leave_balance(employee, leave_type, from_date, to_date, permission_hou
     from_date = getdate(from_date)
     to_date = getdate(to_date)
 
+    # Fetch leave allocation
     allocations = frappe.get_all(
         "Leave Allocation",
         filters={
@@ -880,7 +992,8 @@ def check_leave_balance(employee, leave_type, from_date, to_date, permission_hou
         total_allocated = sum(flt(a.total_leaves_allocated) for a in allocations)
         total_taken = sum(flt(a.total_leaves_taken) for a in allocations)
         remaining = total_allocated - total_taken
-    
+
+    # --- Permission logic ---
     if leave_type.lower() == "permission":
         requested = flt(permission_hours or 0)
         if not requested:
@@ -894,10 +1007,14 @@ def check_leave_balance(employee, leave_type, from_date, to_date, permission_hou
             "unit": "Minutes"
         }
 
-    # 🗓️ Handle normal leaves (in days)
-    from_date = getdate(from_date)
-    to_date = getdate(to_date)
+    # --- Normal Leave Day Calculation ---
     leave_days = (to_date - from_date).days + 1
+
+    # 🔥 APPLY HALF-DAY LOGIC
+    is_half_day = str(half_day) in ("1", "true", "True")
+    if is_half_day:
+        leave_days = 0.5
+
     allowed = remaining >= leave_days
 
     return {
@@ -921,7 +1038,8 @@ def validate_leave_balance(doc, method=None):
         leave_type=doc.leave_type,
         from_date=doc.from_date,
         to_date=doc.to_date,
-        permission_hours=doc.permission_hours
+        permission_hours=doc.permission_hours,
+        half_day=doc.half_day
     )
 
     if not res.get("allowed"):
@@ -1008,6 +1126,32 @@ def update_permission_allocation(doc, method=None):
         f"Total taken now: {new_taken} minutes."
     )
 
+
+@frappe.whitelist()
+def auto_submit_leave_application(doc, method=None):
+    """
+    Automatically submit Leave Application after save if all validations pass.
+    """
+    try:
+        # Skip if already submitted
+        if doc.docstatus == 1:
+            return
+
+        # Double-check validation again (safety)
+        validate_leave_balance(doc)
+
+        # Submit the document programmatically
+        doc.submit()
+
+        frappe.msgprint(
+            f"✅ Leave Application {doc.name} has been submitted successfully."
+        )
+
+    except frappe.ValidationError as e:
+        # Do not submit — validation failed
+        frappe.msgprint(f"❌ Leave not submitted: {str(e)}")
+    except Exception as e:
+        frappe.log_error(frappe.get_traceback(), "Auto Submit Leave Application Error")
 
 @frappe.whitelist()
 def handle_leave_submit(doc, method=None):
@@ -1123,9 +1267,15 @@ def handle_leave_status_change(doc, method=None):
     if getattr(doc, "docstatus", 0) not in [1, 2]:
         return
 
-    employee_email = frappe.get_value("Employee", doc.employee, "email")
-    hr_email = "hr@innoblitz.global"
-    recipients = [email for email in [employee_email, hr_email] if email]
+    employee = frappe.get_value(
+        "Employee",
+        doc.employee,
+        ["email", "personal_email"],
+        as_dict=True
+    )
+
+    employee_email = employee.email or employee.personal_email
+    recipients = [employee_email] if employee_email else []
 
     if not recipients:
         return
@@ -1513,7 +1663,7 @@ def get_employee_last_seven_days_attendance():
 
 
 
-#=========Firebase Notification on Salary Slip creation==========
+#=========Firebase Notification==========
 
 import frappe
 import requests
@@ -1588,6 +1738,28 @@ def send_push_notification_to_user(user: str, title: str, body: str, data: dict 
         return {"error": "no_token", "message": f"No token for user {user}"}
     return _send_v1_message_to_token(token, title, body, data)
 
+def send_chat_notification_to_user(user: str, title: str, body: str):
+    """
+    Send a browser push notification for chat messages.
+    Strips HTML from body content before sending.
+    """
+    try:
+        from bs4 import BeautifulSoup
+        
+        # Strip HTML tags from body
+        if body:
+            soup = BeautifulSoup(body, 'html.parser')
+            body = soup.get_text().strip()
+        
+        # Send the notification
+        return send_push_notification_to_user(user, title, body)
+    except Exception as e:
+        frappe.log_error(
+            message=f"Error sending chat notification to {user}: {str(e)}",
+            title="Chat Notification Error"
+        )
+        return {"error": str(e)}
+
 
 def extend_bootinfo(bootinfo):
     """Expose firebase config from site_config to frontend"""
@@ -1598,3 +1770,866 @@ def extend_bootinfo(bootinfo):
         # Ensure the site_config dict exists
         bootinfo["site_config"] = bootinfo.get("site_config", {})
         bootinfo["site_config"]["firebase"] = firebase_config
+
+
+@frappe.whitelist()
+def create_unread_entry_for_hr(doc, method=None):
+    # skip if HR created it
+    if "HR" in frappe.get_roles(doc.owner):
+        return
+
+    # avoid duplicates
+    if frappe.db.exists("HR Read Tracker", {
+        "reference_doctype": doc.doctype,
+        "reference_name": doc.name
+    }):
+        return
+
+    hr_users = frappe.get_all("Has Role",
+        filters={"role": "HR", "parenttype": "User"},
+        pluck="parent"
+    )
+
+    for user in hr_users:
+        frappe.get_doc({
+            "doctype": "HR Read Tracker",
+            "reference_doctype": doc.doctype,
+            "reference_name": doc.name,
+            "read_by": user,
+            "is_read": 0
+        }).insert(ignore_permissions=True)
+
+
+
+
+@frappe.whitelist()
+def mark_hr_item_as_read(doctype, name):
+    """Mark document as read for logged-in HR."""
+    user = frappe.session.user
+    tracker = frappe.db.exists("HR Read Tracker", {
+        "reference_doctype": doctype,
+        "reference_name": name,
+        "read_by": user
+    })
+    if tracker:
+        frappe.db.set_value("HR Read Tracker", tracker, {
+            "is_read": 1,
+            "read_time": frappe.utils.now()
+        })
+    frappe.db.commit()
+
+
+@frappe.whitelist()
+def get_unread_count():
+    """Return unread count per doctype for the logged-in HR."""
+    user = frappe.session.user
+    counts = frappe.db.sql("""
+        SELECT reference_doctype, COUNT(*) as count
+        FROM `tabHR Read Tracker`
+        WHERE is_read = 0 AND read_by = %s
+        GROUP BY reference_doctype
+    """, user, as_dict=True)
+
+    return {row.reference_doctype: row.count for row in counts}
+
+@frappe.whitelist()
+def get_attendance_stats(range=None, from_date=None, to_date=None):
+    import datetime
+
+    # -----------------------------
+    # LOGGED-IN USER
+    # -----------------------------
+    user = frappe.session.user
+    employee = frappe.db.get_value("Employee", {"user": user}, "name")
+
+    today = frappe.utils.getdate()
+
+    # -----------------------------
+    # RANGE HANDLING
+    # -----------------------------
+    if range == "today":
+        from_date = to_date = today
+
+    elif range == "week":
+        from_date = today - datetime.timedelta(days=today.weekday())
+        to_date = today
+
+    elif range == "month":
+        from_date = today.replace(day=1)
+        to_date = today
+
+    from_date = frappe.utils.getdate(from_date)
+    to_date = frappe.utils.getdate(to_date)
+
+    # ============================================================
+    # 1️⃣ IF EMPLOYEE NOT LINKED → RETURN GLOBAL COMPANY DATA
+    # ============================================================
+    if not employee:
+        return get_global_attendance_stats(from_date, to_date)
+
+    # ============================================================
+    # 2️⃣ EMPLOYEE-WISE ATTENDANCE
+    # ============================================================
+    return get_employee_attendance_stats(employee, from_date, to_date)
+
+
+
+# ==================================================================
+# 🔹 GLOBAL ATTENDANCE (ALL EMPLOYEES)
+# ==================================================================
+def get_global_attendance_stats(from_date, to_date):
+    import datetime
+
+    # Get all possible holiday lists
+    holiday_list_names = frappe.db.get_list("Holiday List", pluck="name")
+    holidays = set()
+
+    if holiday_list_names:
+        holiday_rows = frappe.db.get_all(
+            "Holidays",
+            filters={
+                "parent": ["in", holiday_list_names],
+                "holiday_date": ["between", [from_date, to_date]],
+                "is_working_day": 0
+            },
+            fields=["holiday_date"]
+        )
+        holidays = { frappe.utils.getdate(h["holiday_date"]) for h in holiday_rows }
+
+    holiday_count = len(holidays)
+
+    # Count attendance for all employees
+    def count(status):
+        return frappe.db.count("Attendance", {
+            "status": status,
+            "attendance_date": ["between", [from_date, to_date]]
+        })
+
+    present = count("Present")
+    absent = count("Absent")
+    half_day = count("Half Day")
+    on_leave = count("On Leave")
+
+    # Add holidays into Present count
+    present_final = present + holiday_count
+
+    # Missing calculation
+    total_days = (to_date - from_date).days + 1
+    missing = total_days - (present + absent + half_day + on_leave + holiday_count)
+    missing = max(missing, 0)
+
+    return {
+        "present": present_final,
+        "absent": absent,
+        "half_day": half_day,
+        "on_leave": on_leave,
+        "missing": missing,
+        "last_sync": frappe.utils.now()
+    }
+
+
+
+# ==================================================================
+# 🔹 EMPLOYEE-WISE ATTENDANCE
+# ==================================================================
+def get_employee_attendance_stats(employee, from_date, to_date):
+    import datetime
+
+    # Joining date
+    doj = frappe.utils.getdate(
+        frappe.db.get_value("Employee", employee, "date_of_joining")
+    )
+
+    # Holiday list from "Holiday List" (your custom)
+    holiday_list_doc = frappe.db.get_value(
+        "Holiday List",
+        {"year": from_date.year, "month_year": from_date.month},
+        "name"
+    )
+
+    holidays = set()
+
+    if holiday_list_doc:
+        holiday_rows = frappe.db.get_all(
+            "Holidays",
+            filters={
+                "parent": holiday_list_doc,
+                "holiday_date": ["between", [from_date, to_date]],
+                "is_working_day": 0
+            },
+            fields=["holiday_date"]
+        )
+        holidays = { frappe.utils.getdate(h["holiday_date"]) for h in holiday_rows }
+
+    holiday_count = len(holidays)
+
+    # Attendance counts for employee
+    def count(status):
+        return frappe.db.count("Attendance", {
+            "employee": employee,
+            "status": status,
+            "attendance_date": ["between", [from_date, to_date]]
+        })
+
+    present = count("Present")
+    absent = count("Absent")
+    half_day = count("Half Day")
+    on_leave = count("On Leave")
+
+    # Add holidays to present
+    present_final = present + holiday_count
+
+    # Missing days
+    missing = 0
+    cur = from_date
+
+    while cur <= to_date:
+
+        if cur < doj:
+            cur += datetime.timedelta(days=1)
+            continue
+
+        if cur in holidays:
+            cur += datetime.timedelta(days=1)
+            continue
+
+        exists = frappe.db.exists(
+            "Attendance",
+            {"employee": employee, "attendance_date": cur}
+        )
+
+        if not exists:
+            missing += 1
+
+        cur += datetime.timedelta(days=1)
+
+    return {
+        "present": present_final,
+        "absent": absent,
+        "half_day": half_day,
+        "on_leave": on_leave,
+        "missing": missing,
+        "last_sync": frappe.utils.now()
+    }
+
+
+@frappe.whitelist()
+def get_month_holidays(month=None, year=None):
+    """
+    Fetch holidays for any given month/year.
+    """
+
+    today = datetime.today()
+    month = int(month) if month else today.month
+    year = int(year) if year else today.year
+
+    holiday_lists = frappe.get_all(
+        "Holiday List",
+        filters={"year": year},
+        fields=["name"]
+    )
+
+    result = []
+
+    for hl in holiday_lists:
+        doc = frappe.get_doc("Holiday List", hl.name)
+        for h in doc.holidays:
+            if h.holiday_date.month == month and h.holiday_date.year == year and h.is_working_day == 0:
+                result.append({
+                    "holiday_date": h.holiday_date.strftime("%Y-%m-%d"),
+                    "description": h.description
+                })
+
+    return result
+
+
+# Keep the file loaded in memory for performance
+LOCATION_CACHE = None
+
+def load_location_data():
+    global LOCATION_CACHE
+    if LOCATION_CACHE:
+        return LOCATION_CACHE
+
+    path = os.path.join(
+        get_bench_path(),
+        "apps", "company", "company", "utils", "location_data.json"
+    )
+
+    with open(path, "r", encoding="utf-8") as f:
+        LOCATION_CACHE = json.load(f)
+
+    return LOCATION_CACHE
+
+
+@frappe.whitelist()
+def get_states(country):
+    data = load_location_data()
+
+    for c in data:
+        if c["country"] == country:
+            # return array of state names EXACTLY like old API
+            return [state["name"] for state in c["states"]]
+
+    return []
+
+
+@frappe.whitelist()
+def get_cities(country, state):
+    data = load_location_data()
+
+    for c in data:
+        if c["country"] == country:
+            for st in c["states"]:
+                if st["name"].lower().strip() == state.lower().strip():
+                    # return list of city names EXACTLY like old API
+                    return st["cities"]
+
+    return []
+    
+    
+#=================== Convert Estimation to Invoice ==========================
+
+import frappe
+
+@frappe.whitelist()
+def convert_estimation_to_invoice(estimation):
+    if not estimation:
+        frappe.throw("Estimation ID required")
+
+    # Load estimation document
+    est = frappe.get_doc("Estimation", estimation)
+
+    # Prevent duplicate conversion
+    existing_invoice = frappe.db.get_value(
+        "Invoice",
+        {"converted_estimation_id": est.name},
+        "name"
+    )
+    if existing_invoice:
+        frappe.msgprint(f"Invoice <b>{existing_invoice}</b> already created for this estimation.")
+        return existing_invoice
+
+    # Create new invoice
+    inv = frappe.new_doc("Invoice")
+    inv.flags.ignore_mandatory = True
+
+    # Copy main fields
+    fields_to_copy = [
+        "client_name",
+        "billing_name",
+        "total_qty",
+        "total_amount",
+        "overall_discount_type",
+        "overall_discount",
+        "grand_total",
+        "description"
+    ]
+
+    for f in fields_to_copy:
+        inv.set(f, est.get(f))
+
+    # Invoice date
+    inv.invoice_date = frappe.utils.nowdate()
+
+    # Conversion flags
+    inv.converted_from_estimation = 1
+    inv.converted_estimation_id = est.name
+
+    # Copy items
+    for item in est.get("table_qecz"):
+        inv.append("table_qecz", {
+            "service": item.service,
+            "hsn_code": item.hsn_code,
+            "description": item.description,
+            "quantity": item.quantity,
+            "price": item.price,
+            "discount_type": item.discount_type,
+            "discount": item.discount,
+            "tax_type": item.tax_type,
+            "tax_category": item.tax_category,
+            "tax_percent": item.tax_percent,
+            "tax_amount": item.tax_amount,
+            "cgst": item.cgst,
+            "sgst": item.sgst,
+            "igst": item.igst,
+            "sub_total": item.sub_total
+        })
+
+    # Save invoice
+    inv.insert(ignore_permissions=True, ignore_mandatory=True)
+
+    # SUCCESS MESSAGE
+    frappe.msgprint(
+        msg=f"Estimation <b>{est.name}</b> successfully converted to Invoice <b>{inv.name}</b>!",
+        title="Conversion Complete",
+        indicator="green"
+    )
+
+    return inv.name
+
+
+@frappe.whitelist()
+def get_current_month_missing_timesheets():
+    import calendar
+    from datetime import date, timedelta
+
+    user = frappe.session.user
+    employee = frappe.db.get_value("Employee", {"user": user}, "name")
+
+    if not employee:
+        return {"error": "No employee linked"}
+
+    today = date.today()
+    year = today.year
+    month = today.month
+
+    # Month start & end
+    first_day = date(year, month, 1)
+    last_day = today - timedelta(days=1)
+
+    # ---------------------------
+    # 1️⃣ FETCH HOLIDAYS (Your Custom DocType)
+    # ---------------------------
+    holiday_list_doc = frappe.get_all(
+        "Holiday List",
+        fields=["name"],
+        filters={"year": year, "month_year": month},
+        limit=1
+    )
+
+    holidays = []
+    if holiday_list_doc:
+        holiday_list_name = holiday_list_doc[0].name
+
+        holiday_rows = frappe.get_all(
+            "Holidays",
+            fields=["holiday_date", "is_working_day"],
+            filters={"parent": holiday_list_name}
+        )
+
+        holidays = [
+            h.holiday_date
+            for h in holiday_rows
+            if not h.is_working_day   # exclude working days
+        ]
+
+    # ---------------------------
+    # 2️⃣ FETCH EXISTING TIMESHEETS
+    # ---------------------------
+    existing_ts = [
+        d.timesheet_date
+        for d in frappe.get_all(
+            "Timesheet",
+            fields=["timesheet_date"],
+            filters={
+                "employee": employee,
+                "timesheet_date": ["between", [first_day, last_day]]
+            }
+        )
+    ]
+
+    # ---------------------------
+    # 3️⃣ CALCULATE MISSING DATES
+    # ---------------------------
+    missing = []
+    current = first_day
+
+    while current <= last_day:
+
+        # Skip Sundays
+        if current.weekday() == 6:
+            current += timedelta(days=1)
+            continue
+
+        # Skip holidays (non-working)
+        if current in holidays:
+            current += timedelta(days=1)
+            continue
+
+        # Skip days already having timesheet
+        if current not in existing_ts:
+            missing.append(str(current))
+
+        current += timedelta(days=1)
+
+    return missing
+
+
+@frappe.whitelist()
+def get_leave_allocation_by_type(leave_type):
+    user = frappe.session.user
+    employee = frappe.db.get_value("Employee", {"user": user}, "name")
+
+    if not employee:
+        return {
+            "allocated": 0,
+            "taken": 0,
+            "balance": 0
+        }
+
+    today = getdate()
+    month_start = today.replace(day=1)
+    month_end = today
+
+    # Fetch allocations that match leave type AND overlap this month
+    allocations = frappe.db.get_all(
+        "Leave Allocation",
+        filters={
+            "employee": employee,
+            "leave_type": leave_type,
+            "status": "Approved",
+            "from_date": ["<=", month_end],
+            "to_date": [">=", month_start]
+        },
+        fields=["total_leaves_allocated", "total_leaves_taken"]
+    )
+
+    if not allocations:
+        return {
+            "allocated": 0,
+            "taken": 0,
+            "balance": 0
+        }
+
+    allocated = sum(a.total_leaves_allocated for a in allocations)
+    taken = sum(a.total_leaves_taken for a in allocations)
+    balance = allocated - taken
+
+    return {
+        "allocated": allocated,
+        "taken": taken,
+        "balance": balance
+    }
+
+
+from dateutil.relativedelta import relativedelta
+
+@frappe.whitelist()
+def is_employee_in_probation():
+    user = frappe.session.user
+
+    employee = frappe.db.get_value(
+        "Employee",
+        {"user": user},
+        ["date_of_joining"],
+        as_dict=True
+    )
+
+    if not employee or not employee.date_of_joining:
+        return {"in_probation": False}
+
+    doj = employee.date_of_joining
+    today = frappe.utils.getdate()
+
+    # Probation ends exactly 3 months after DOJ
+    probation_end = doj + relativedelta(months=+3)
+
+    return {
+        "in_probation": today < probation_end
+    }
+
+
+@frappe.whitelist()
+def get_today_event():
+    user = frappe.session.user
+
+    event = frappe.db.get_value(
+        "Flash Message",
+        {"enabled": 1, "event_date": frappe.utils.today()},
+        ["name", "event_name", "title", "message", "music"],
+        as_dict=True
+    )
+
+    if not event:
+        return
+
+    # Fetch child table entries
+    allowed_users = frappe.get_all(
+        "Event Popup Allowed User",
+        filters={"parent": event.name, "parenttype": "Flash Message"},
+        fields=["user"]
+    )
+
+    if allowed_users:
+        allowed_list = [u.user for u in allowed_users]
+        if user not in allowed_list:
+            return  # Block popup for this user
+
+    return event
+
+import frappe
+import qrcode
+import base64
+from io import BytesIO
+
+@frappe.whitelist()
+def get_upi_qr(upi_string):
+    qr = qrcode.QRCode(
+        version=1,
+        box_size=10,
+        border=2
+    )
+    qr.add_data(upi_string)
+    qr.make(fit=True)
+
+    img = qr.make_image(fill='black', back_color='white')
+
+    buffer = BytesIO()
+    img.save(buffer, format="PNG")
+    encoded = base64.b64encode(buffer.getvalue()).decode("utf-8")
+
+    return encoded
+
+@frappe.whitelist()
+def has_invoice_collections(invoice_name):
+    count = frappe.db.count("Invoice Collection", {"invoice": invoice_name})
+    return count > 0
+
+
+@frappe.whitelist()
+def get_dashboard_stats():
+
+    # ----------------------------------
+    # ESTIMATION COUNTS
+    # ----------------------------------
+
+    # Converted estimations = Those that appear in Invoice.converted_estimation_id
+    converted_list = frappe.db.get_all(
+        "Invoice",
+        filters={"converted_from_estimation": 1},
+        fields=["converted_estimation_id"]
+    )
+
+    converted_ids = [d.converted_estimation_id for d in converted_list if d.converted_estimation_id]
+
+    # Total converted estimation count
+    converted_estimations = len(converted_ids)
+
+    # Pending estimations = Estimations NOT in converted list
+    if converted_ids:
+        pending_estimations = frappe.db.count(
+            "Estimation",
+            filters=[["ref_no", "not in", converted_ids]]
+        )
+    else:
+        # if nothing converted, all are pending
+        pending_estimations = frappe.db.count("Estimation")
+
+    # ----------------------------------
+    # INVOICE COUNTS
+    # ----------------------------------
+
+    invoices = frappe.db.get_all(
+        "Invoice",
+        filters={"docstatus": 0},
+        fields=["name", "balance_amount"]
+    )
+
+    total_pending = 0
+
+    for inv in invoices:
+
+        # Fetch latest Invoice Collection entry
+        latest = frappe.db.sql("""
+            SELECT amount_pending
+            FROM `tabInvoice Collection`
+            WHERE invoice = %s
+            ORDER BY creation DESC
+            LIMIT 1
+        """, (inv.name,), as_dict=True)
+
+        if latest and latest[0].amount_pending is not None:
+            # If collection exists → use latest pending
+            pending = latest[0].amount_pending
+        else:
+            # If no collection → full balance is pending
+            pending = inv.balance_amount
+
+        total_pending += pending or 0
+
+
+    # Count open invoices
+    open_invoices = frappe.db.count("Invoice", {"docstatus": 0})
+
+
+    return {
+        "pending_estimations": pending_estimations,
+        "converted_estimations": converted_estimations,
+        "open_invoices": open_invoices,
+        "invoice_pending_amount": total_pending
+    }
+    
+@frappe.whitelist()
+def get_job_openings():
+    jobs = frappe.get_all(
+        "Job Opening",
+        filters={"status": "Open"},
+        fields="*",
+        order_by="posted_on desc"
+    )
+    return jobs
+
+
+@frappe.whitelist(allow_guest=True)
+def submit_job_application():
+    data = frappe.form_dict
+
+    # 1) Validate file
+    if "resume_attachment" not in frappe.request.files:
+        frappe.throw("Please upload your Resume / CV")
+
+    uploaded_file = frappe.request.files["resume_attachment"]
+
+    # 2) Save file temporarily (without linking)
+    temp_file = save_file(
+        uploaded_file.filename,
+        uploaded_file.read(),
+        None,
+        None,
+        folder=None,
+        is_private=1
+    )
+
+    # 3) Create Job Applicant with mandatory resume field filled
+    doc = frappe.get_doc({
+        "doctype": "Job Applicant",
+        "applicant_name": data.get("applicant_name"),
+        "email_id": data.get("email_id"),
+        "phone_number": data.get("phone_number"),
+        "state": data.get("state"),
+        "city": data.get("city"),
+        "job_title": data.get("job_title"),
+        "source": data.get("source"),
+        "cover_letter": data.get("cover_letter"),
+        "resume_attachment": temp_file.file_url,
+        "lower_range": data.get("lower_range"),
+        "upper_range": data.get("upper_range")
+    })
+
+    doc.insert(ignore_permissions=True)
+
+    # 4) Attach file to Job Applicant safely (no timestamp mismatch)
+    temp_file.update({
+        "attached_to_doctype": "Job Applicant",
+        "attached_to_name": doc.name
+    })
+
+    frappe.db.commit()
+
+    return {
+        "status": "success",
+        "message": "Application submitted",
+        "applicant_id": doc.name
+    }
+
+
+@frappe.whitelist()
+def get_expense_income_summary(filter_type=None, from_date=None, to_date=None):
+
+    conditions_income = ""
+    conditions_expense = ""
+
+    # ---------------------- FILTER HANDLING ----------------------
+    if filter_type == "today":
+        conditions_income = "WHERE date = CURDATE()"
+        conditions_expense = "WHERE date = CURDATE()"
+
+    elif filter_type == "this_week":
+        conditions_income = "WHERE YEARWEEK(date) = YEARWEEK(CURDATE())"
+        conditions_expense = "WHERE YEARWEEK(date) = YEARWEEK(CURDATE())"
+
+    elif filter_type == "this_month":
+        conditions_income = "WHERE MONTH(date) = MONTH(CURDATE()) AND YEAR(date) = YEAR(CURDATE())"
+        conditions_expense = "WHERE MONTH(date) = MONTH(CURDATE()) AND YEAR(date) = YEAR(CURDATE())"
+
+    elif filter_type == "this_year":
+        conditions_income = "WHERE YEAR(date) = YEAR(CURDATE())"
+        conditions_expense = "WHERE YEAR(date) = YEAR(CURDATE())"
+
+    elif filter_type == "custom" and from_date and to_date:
+        conditions_income = f"WHERE date BETWEEN '{from_date}' AND '{to_date}'"
+        conditions_expense = f"WHERE date BETWEEN '{from_date}' AND '{to_date}'"
+
+
+    # ---------------------- QUERY ----------------------
+    total_income = frappe.db.sql(f"""
+        SELECT IFNULL(SUM(amount), 0)
+        FROM `tabIncome`
+        {conditions_income}
+    """)[0][0]
+
+    total_expense = frappe.db.sql(f"""
+        SELECT IFNULL(SUM(total), 0)
+        FROM `tabExpense`
+        {conditions_expense}
+    """)[0][0]
+
+    return {
+        "total_income": total_income,
+        "total_expense": total_expense,
+        "balance": total_income - total_expense
+    }
+
+@frappe.whitelist()
+def get_expense_tracker_summary(filter_type="", from_date="", to_date="", expense_type=""):
+    filters = []
+
+    if expense_type and expense_type != "All":
+        filters.append(["type", "=", expense_type])
+    
+    # Fallback to creation if date_time is not set
+    # Note: Using get_list with filters is easier for standard fields
+    
+    if filter_type == "today":
+        filters.append(["date_time", "between", [today() + " 00:00:00", today() + " 23:59:59"]])
+    
+    elif filter_type == "this_week":
+        start = add_days(today(), -7)
+        filters.append(["date_time", "between", [get_date_str(start) + " 00:00:00", today() + " 23:59:59"]])
+        
+    elif filter_type == "this_month":
+        start = get_first_day(today())
+        end = get_last_day(today())
+        filters.append(["date_time", "between", [get_date_str(start) + " 00:00:00", get_date_str(end) + " 23:59:59"]])
+
+        
+    elif filter_type == "this_year":
+        year = getdate(today()).year
+        filters.append(["date_time", "between", [f"{year}-01-01 00:00:00", f"{year}-12-31 23:59:59"]])
+        
+    elif filter_type == "custom" and from_date and to_date:
+        filters.append(["date_time", "between", [from_date + " 00:00:00", to_date + " 23:59:59"]])
+
+
+    # We fetch type and amount for all matching records and sum in Python
+    # This is very fast for reasonable amounts of data and much easier to debug
+    records = frappe.get_all("Expense Tracker", 
+        fields=["type", "amount"], 
+        filters=filters
+    )
+
+    income = 0
+    expense = 0
+    
+    for d in records:
+        val = float(d.amount or 0)
+        if d.type == "Income":
+            income += val
+        elif d.type == "Expense":
+            expense += val
+
+    return {
+        "total_income": income,
+        "total_expense": expense,
+        "balance": income - expense,
+        "debug": {
+            "filters": filters,
+            "filter_type": filter_type,
+            "count": len(records),
+            "total_count": frappe.db.count("Expense Tracker")
+        }
+    }
+
+
+

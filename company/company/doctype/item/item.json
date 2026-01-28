@@ -13,11 +13,13 @@
  ],
  "fields": [
   {
+   "allow_in_quick_entry": 1,
    "fieldname": "item_code",
    "fieldtype": "Data",
-   "label": "Item code"
+   "label": "HSN Code"
   },
   {
+   "allow_in_quick_entry": 1,
    "fieldname": "item_name",
    "fieldtype": "Data",
    "label": "Item Name"
@@ -28,6 +30,7 @@
    "label": "Available Qty"
   },
   {
+   "allow_in_quick_entry": 1,
    "fieldname": "rate",
    "fieldtype": "Currency",
    "label": "Rate"
@@ -36,7 +39,7 @@
  "grid_page_length": 50,
  "index_web_pages_for_search": 1,
  "links": [],
- "modified": "2025-09-23 16:49:02.203201",
+ "modified": "2026-01-09 14:04:20.975489",
  "modified_by": "Administrator",
  "module": "Company",
  "name": "Item",
@@ -80,7 +83,9 @@
    "write": 1
   }
  ],
+ "quick_entry": 1,
  "row_format": "Dynamic",
+ "search_fields": "item_name",
  "sort_field": "creation",
  "sort_order": "DESC",
  "states": []

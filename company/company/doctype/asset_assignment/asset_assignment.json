@@ -1,5 +1,6 @@
 {
  "actions": [],
+ "allow_import": 1,
  "allow_rename": 1,
  "autoname": "AA.#####",
  "creation": "2025-10-24 10:58:47.320855",
@@ -27,6 +28,7 @@
    "fieldname": "assigned_to",
    "fieldtype": "Link",
    "in_list_view": 1,
+   "in_standard_filter": 1,
    "label": "Assigned To",
    "options": "Employee",
    "reqd": 1
@@ -53,13 +55,13 @@
    "fieldtype": "Data",
    "in_list_view": 1,
    "label": "Asset Name",
-   "options": "Asset",
    "read_only": 1
   },
   {
    "fetch_from": "assigned_to.employee_name",
    "fieldname": "employee_name",
    "fieldtype": "Data",
+   "in_standard_filter": 1,
    "label": "Employee Name",
    "read_only": 1
   }
@@ -67,7 +69,7 @@
  "grid_page_length": 50,
  "index_web_pages_for_search": 1,
  "links": [],
- "modified": "2025-10-24 15:26:13.883608",
+ "modified": "2025-12-11 17:18:42.909909",
  "modified_by": "Administrator",
  "module": "Company",
  "name": "Asset Assignment",

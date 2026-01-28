@@ -31,7 +31,7 @@
    "fieldtype": "Select",
    "in_list_view": 1,
    "label": "Category",
-   "options": "\nDomain\nEmail\nServer\nLaptop\nOthers",
+   "options": "\nDomain\nEmail\nSSL\nServer\nLaptop\nOthers",
    "reqd": 1
   },
   {
@@ -83,7 +83,7 @@
  "grid_page_length": 50,
  "index_web_pages_for_search": 1,
  "links": [],
- "modified": "2025-10-16 12:58:40.571589",
+ "modified": "2025-11-10 14:27:28.693082",
  "modified_by": "Administrator",
  "module": "Company",
  "name": "Renewal Tracker",

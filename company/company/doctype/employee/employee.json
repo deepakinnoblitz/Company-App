@@ -8,6 +8,7 @@
  "field_order": [
   "employee_id",
   "employee_name",
+  "profile_picture",
   "country",
   "date_of_joining",
   "bank_name",
@@ -24,6 +25,8 @@
   "designation",
   "status",
   "user",
+  "section_break_zuyd",
+  "ctc",
   "salary_details_section",
   "basic_pay",
   "hra",
@@ -50,6 +53,7 @@
    "fieldname": "employee_name",
    "fieldtype": "Data",
    "in_list_view": 1,
+   "in_standard_filter": 1,
    "label": "Employee Name",
    "reqd": 1
   },
@@ -96,9 +100,10 @@
   {
    "fieldname": "status",
    "fieldtype": "Select",
+   "in_list_view": 1,
+   "in_standard_filter": 1,
    "label": "Status",
-   "options": "\nActive\nInactive",
-   "read_only": 1
+   "options": "Active\nInactive"
   },
   {
    "fieldname": "bank_account",
@@ -116,18 +121,21 @@
    "fieldname": "basic_pay",
    "fieldtype": "Currency",
    "label": "Basic Pay",
+   "precision": "2",
    "read_only": 1
   },
   {
    "fieldname": "hra",
    "fieldtype": "Currency",
    "label": "HRA",
+   "precision": "2",
    "read_only": 1
   },
   {
    "fieldname": "pf",
    "fieldtype": "Currency",
-   "label": "PF"
+   "label": "PF",
+   "precision": "2"
   },
   {
    "fieldname": "dob",
@@ -160,36 +168,42 @@
    "fieldname": "conveyance_allowances",
    "fieldtype": "Currency",
    "label": "Conveyance Allowances",
+   "precision": "2",
    "read_only": 1
   },
   {
    "fieldname": "medical_allowances",
    "fieldtype": "Currency",
    "label": "Medical Allowances",
+   "precision": "2",
    "read_only": 1
   },
   {
    "fieldname": "other_allowances",
    "fieldtype": "Currency",
    "label": "Other Allowances",
+   "precision": "2",
    "read_only": 1
   },
   {
    "fieldname": "health_insurance",
    "fieldtype": "Currency",
    "label": "ESI/Health Insurance",
+   "precision": "2",
    "read_only": 1
   },
   {
    "fieldname": "professional_tax",
    "fieldtype": "Currency",
    "label": "Professional Tax",
+   "precision": "2",
    "read_only": 1
   },
   {
    "fieldname": "loan_recovery",
    "fieldtype": "Currency",
    "label": "Loan Recovery",
+   "precision": "2",
    "read_only": 1
   },
   {
@@ -210,12 +224,27 @@
    "fieldname": "office_phone_number",
    "fieldtype": "Phone",
    "label": "Office Phone Number"
+  },
+  {
+   "fieldname": "section_break_zuyd",
+   "fieldtype": "Section Break"
+  },
+  {
+   "fieldname": "ctc",
+   "fieldtype": "Currency",
+   "label": "CTC (Monthly)",
+   "precision": "2"
+  },
+  {
+   "fieldname": "profile_picture",
+   "fieldtype": "Attach Image",
+   "label": "Profile Picture"
   }
  ],
  "grid_page_length": 50,
  "index_web_pages_for_search": 1,
  "links": [],
- "modified": "2025-10-27 12:57:10.807197",
+ "modified": "2025-11-20 17:10:06.697701",
  "modified_by": "Administrator",
  "module": "Company",
  "name": "Employee",
@@ -258,6 +287,7 @@
   }
  ],
  "row_format": "Dynamic",
+ "search_fields": "employee_name",
  "sort_field": "creation",
  "sort_order": "DESC",
  "states": []

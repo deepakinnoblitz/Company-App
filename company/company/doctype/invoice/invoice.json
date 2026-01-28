@@ -6,22 +6,32 @@
  "doctype": "DocType",
  "engine": "InnoDB",
  "field_order": [
+  "ref_no",
   "invoice_details_section",
   "client_name",
-  "invoice_date",
-  "po_no",
-  "payment_terms",
-  "ref_no",
+  "billing_address",
   "column_break_nfoe",
+  "customer_name",
   "billing_name",
   "phone_number",
-  "po_date",
+  "section_break_taha",
+  "invoice_date",
+  "payment_terms",
   "due_date",
+  "column_break_rtdz",
+  "po_no",
+  "po_date",
+  "section_break_iipw",
+  "converted_estimation_id",
+  "column_break_vkpy",
+  "converted_from_estimation",
   "section_break_wbpo",
   "table_qecz",
   "section_break_mzdp",
-  "attach",
+  "attachments",
   "description",
+  "bank_account",
+  "terms_and_conditions",
   "column_break_ofbd",
   "total_amount",
   "total_qty",
@@ -36,15 +46,16 @@
    "fieldname": "client_name",
    "fieldtype": "Link",
    "in_list_view": 1,
-   "label": "Client Name",
-   "options": "Customer",
+   "label": "Customer ID",
+   "options": "Contacts",
    "reqd": 1
   },
   {
+   "fetch_from": "client_name.company_name",
    "fieldname": "billing_name",
    "fieldtype": "Data",
    "label": "Billing Name",
-   "reqd": 1
+   "read_only": 1
   },
   {
    "fieldname": "column_break_nfoe",
@@ -55,6 +66,7 @@
    "fieldtype": "Data",
    "in_list_view": 1,
    "label": "Ref no",
+   "read_only": 1,
    "reqd": 1,
    "unique": 1
   },
@@ -92,11 +104,6 @@
    "read_only": 1
   },
   {
-   "fieldname": "attach",
-   "fieldtype": "Attach",
-   "label": "Add Files"
-  },
-  {
    "fieldname": "description",
    "fieldtype": "Small Text",
    "label": "Description"
@@ -108,7 +115,7 @@
   {
    "fieldname": "invoice_details_section",
    "fieldtype": "Section Break",
-   "label": "Invoice Details"
+   "label": "Customer Details"
   },
   {
    "fieldname": "total_qty",
@@ -130,10 +137,11 @@
    "reqd": 1
   },
   {
+   "fetch_from": "client_name.phone",
    "fieldname": "phone_number",
    "fieldtype": "Phone",
    "label": "Phone Number",
-   "reqd": 1
+   "read_only": 1
   },
   {
    "fieldname": "payment_terms",
@@ -154,8 +162,7 @@
   {
    "fieldname": "due_date",
    "fieldtype": "Date",
-   "label": "Due Date",
-   "reqd": 1
+   "label": "Due Date"
   },
   {
    "fieldname": "received_amount",
@@ -168,12 +175,73 @@
    "fieldtype": "Float",
    "label": "Balance Amount",
    "read_only": 1
+  },
+  {
+   "fieldname": "section_break_iipw",
+   "fieldtype": "Section Break",
+   "label": "Converted from Estimation Details"
+  },
+  {
+   "fieldname": "converted_estimation_id",
+   "fieldtype": "Data",
+   "label": "Converted Estimation ID",
+   "read_only": 1
+  },
+  {
+   "fieldname": "column_break_vkpy",
+   "fieldtype": "Column Break"
+  },
+  {
+   "default": "0",
+   "fieldname": "converted_from_estimation",
+   "fieldtype": "Check",
+   "label": "Converted from Estimation"
+  },
+  {
+   "fetch_from": "client_name.address",
+   "fieldname": "billing_address",
+   "fieldtype": "Small Text",
+   "label": "Billing Address",
+   "read_only": 1
+  },
+  {
+   "fieldname": "section_break_taha",
+   "fieldtype": "Section Break",
+   "label": "Invoice Details"
+  },
+  {
+   "fieldname": "column_break_rtdz",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "attachments",
+   "fieldtype": "Attach",
+   "label": "Attachments"
+  },
+  {
+   "default": "BACC00001",
+   "fieldname": "bank_account",
+   "fieldtype": "Link",
+   "label": "Bank Account",
+   "options": "Company Bank Account"
+  },
+  {
+   "fieldname": "terms_and_conditions",
+   "fieldtype": "Small Text",
+   "label": "Terms and Conditions"
+  },
+  {
+   "fetch_from": "client_name.first_name",
+   "fieldname": "customer_name",
+   "fieldtype": "Data",
+   "label": "Customer Name",
+   "read_only": 1
   }
  ],
  "grid_page_length": 50,
  "index_web_pages_for_search": 1,
  "links": [],
- "modified": "2025-09-20 15:59:18.784170",
+ "modified": "2026-01-05 12:54:37.624805",
  "modified_by": "Administrator",
  "module": "Company",
  "name": "Invoice",

@@ -16,7 +16,7 @@
  "link_to": "Purchase",
  "link_type": "DocType",
  "links": [],
- "modified": "2025-10-13 11:08:19.609179",
+ "modified": "2026-01-08 11:02:59.827379",
  "modified_by": "Administrator",
  "module": "Company",
  "name": "Purchase List",
@@ -28,9 +28,12 @@
  "roles": [
   {
    "role": "Sales"
+  },
+  {
+   "role": "CRM And Sales"
   }
  ],
- "sequence_id": 28.0,
+ "sequence_id": 40.0,
  "shortcuts": [],
  "title": "Purchase List",
  "type": "Link"

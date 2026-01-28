@@ -6,17 +6,19 @@
  "doctype": "DocType",
  "engine": "InnoDB",
  "field_order": [
+  "customer_details_section",
   "customer_name",
   "company_name",
   "gstin",
   "phone_number",
   "email",
+  "assigned_to",
+  "remarks",
+  "column_break_dgoa",
   "country",
   "state",
-  "column_break_dgoa",
+  "city",
   "billing_address",
-  "remarks",
-  "assigned_to",
   "lead",
   "customer_type"
  ],
@@ -24,7 +26,9 @@
   {
    "fieldname": "customer_name",
    "fieldtype": "Data",
-   "label": "Customer Name"
+   "in_list_view": 1,
+   "label": "Customer Name",
+   "reqd": 1
   },
   {
    "fieldname": "company_name",
@@ -58,7 +62,7 @@
   },
   {
    "fieldname": "state",
-   "fieldtype": "Data",
+   "fieldtype": "Select",
    "label": "State"
   },
   {
@@ -91,13 +95,23 @@
    "fieldname": "customer_type",
    "fieldtype": "Select",
    "label": "Customer Type",
-   "options": "select Customer Type\nSales\nPurchase"
+   "options": "\nSales\nPurchase"
+  },
+  {
+   "fieldname": "city",
+   "fieldtype": "Select",
+   "label": "City"
+  },
+  {
+   "fieldname": "customer_details_section",
+   "fieldtype": "Section Break",
+   "label": "Customer Details"
   }
  ],
  "grid_page_length": 50,
  "index_web_pages_for_search": 1,
  "links": [],
- "modified": "2025-09-24 12:39:11.046816",
+ "modified": "2025-11-15 19:18:26.009899",
  "modified_by": "Administrator",
  "module": "Company",
  "name": "Customer",
@@ -130,6 +144,7 @@
   }
  ],
  "row_format": "Dynamic",
+ "search_fields": "customer_name, company_name, country, state, city",
  "sort_field": "creation",
  "sort_order": "DESC",
  "states": []

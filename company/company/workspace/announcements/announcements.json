@@ -16,7 +16,7 @@
  "link_to": "Announcement",
  "link_type": "DocType",
  "links": [],
- "modified": "2025-10-13 11:14:16.855897",
+ "modified": "2025-12-12 14:56:00.573645",
  "modified_by": "Administrator",
  "module": "Company",
  "name": "Announcements",
@@ -30,7 +30,7 @@
    "role": "HR"
   }
  ],
- "sequence_id": 15.0,
+ "sequence_id": 22.0,
  "shortcuts": [],
  "title": "Announcements",
  "type": "Link"

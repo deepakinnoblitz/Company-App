@@ -45,7 +45,7 @@
  "label": "HR Dashboard",
  "link_type": "DocType",
  "links": [],
- "modified": "2025-10-24 11:46:33.475877",
+ "modified": "2025-12-10 16:36:30.760114",
  "modified_by": "Administrator",
  "module": "Company",
  "name": "HR Dashboard",
@@ -68,7 +68,7 @@
    "role": "HR"
   }
  ],
- "sequence_id": 7.0,
+ "sequence_id": 11.0,
  "shortcuts": [],
  "title": "HR Dashboard",
  "type": "Workspace"

@@ -6,7 +6,7 @@ document.addEventListener("DOMContentLoaded", async () => {
   // ✅ Register Service Worker (combined one)
   if ("serviceWorker" in navigator) {
     try {
-      const registration = await navigator.serviceWorker.register("/assets/company/service-worker.js");
+      const registration = await navigator.serviceWorker.register("/service-worker.js");
       console.log("✅ Service Worker registered:", registration);
 
       // Optional: listen for updates
@@ -28,7 +28,11 @@ document.addEventListener("DOMContentLoaded", async () => {
       console.error("❌ Service Worker registration failed:", err);
     }
   } else {
-    console.warn("🚫 Service Workers are not supported in this browser.");
+    if (window.location.protocol === "http:" && !["localhost", "127.0.0.1"].includes(window.location.hostname)) {
+      console.warn("🚫 Service Workers require HTTPS or localhost. You are using a custom domain on HTTP, which is treated as insecure.");
+    } else {
+      console.warn("🚫 Service Workers are not supported in this browser.");
+    }
   }
 
   // ✅ Add manifest dynamically (in case it’s not linked in index.html)

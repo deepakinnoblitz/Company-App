@@ -3,6 +3,16 @@ from frappe.model.document import Document
 from frappe.utils import getdate, flt
 
 class Invoice(Document):
+
+    def validate(self):
+        self.calculate_child_rows()
+        self.calculate_totals()
+
+        # Only validate collections for existing invoices
+        if not self.is_new():
+            if frappe.db.exists("Invoice Collection", {"invoice": self.name}):
+                frappe.throw("This invoice already has collections. Editing is not allowed.")
+
     
     def autoname(self):
         """Set document name = ref_no"""
@@ -60,3 +70,34 @@ class Invoice(Document):
             "received_amount": flt(total_collected),
             "balance_amount": flt(balance_amount)
         })
+
+    def calculate_child_rows(self):
+        for item in self.table_qecz:
+            item.calculate_tax_split()
+
+    def calculate_totals(self):
+        total = 0
+        total_qty = 0
+
+        for item in self.table_qecz:
+            total += item.sub_total or 0
+            total_qty += item.quantity or 0
+
+        # Assign raw totals
+        self.total_qty = total_qty
+        self.total_amount = total
+
+        # Apply Overall Discount
+        overall_disc = float(self.overall_discount or 0)
+        disc_type = self.overall_discount_type or "Flat"
+
+        if disc_type == "Flat":
+            total -= overall_disc
+        elif disc_type == "Percentage":
+            total -= (total * overall_disc / 100)
+
+        if total < 0:
+            total = 0
+
+        self.grand_total = total
+

@@ -1,4 +1,4 @@
-frappe.after_ajax(() => { 
+frappe.after_ajax(() => {
     frappe.call({
         method: "company.company.api.get_today_checkin_time",
         callback: function (r) {
@@ -8,7 +8,7 @@ frappe.after_ajax(() => {
             let display = "";
             let badgeStyle = ""; // custom style per status
 
-            switch(data.status) {
+            switch (data.status) {
                 case "Present":
                 case "Checked In":
                     display = `Today Checked In: ${data.checkin_time}`;
@@ -88,3 +88,38 @@ frappe.after_ajax(() => {
         }
     });
 });
+
+// ================= GLOBAL REPORT CUSTOMIZATION =================
+// Persistent poller to handle dynamic UI rendering/re-rendering in Reports
+// Persistent poller to handle dynamic UI rendering/re-rendering in Reports
+setInterval(() => {
+    try {
+        const route = frappe.get_route();
+        if (!route || (route[0] !== 'query-report' && route[0] !== 'report')) return;
+
+        // 1. Hide "Actions" Button (Custom Actions)
+        // Targeting specific structure from User HTML
+        $('.custom-actions .inner-group-button[data-label="Actions"]').hide();
+
+        // 2. Hide Menu Items by data-label
+        // Including both raw and encoded versions to be safe
+        const hide_labels = [
+            "Edit",
+            "Setup%20Auto%20Email",
+            "Add%20Column",
+            "User%20Permissions",
+            "Setup Auto Email",
+            "Add Column",
+            "User Permissions"
+        ];
+
+        hide_labels.forEach(label => {
+            // Find visible items to avoid redundant DOM updates
+            $(`.menu-item-label[data-label="${label}"]`).closest('li:visible').hide();
+        });
+
+    } catch (e) {
+        // Suppress errors to avoid console noise
+        console.warn("Report Customization Error:", e);
+    }
+}, 500); // Check every second

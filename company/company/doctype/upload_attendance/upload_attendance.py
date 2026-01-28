@@ -1,8 +1,11 @@
 import frappe
 import pandas as pd
 from frappe.model.document import Document
-from datetime import datetime
+from datetime import datetime, time
 import os
+import re
+import numpy as np
+
 
 class UploadAttendance(Document):
     pass
@@ -11,10 +14,14 @@ class UploadAttendance(Document):
 @frappe.whitelist()
 def import_attendance(docname):
     """
-    Import attendance from uploaded CSV, or XLSX file in Upload Attendance DocType.
-    Maps Person ID -> employee_id, finds the Employee record, and links employee accordingly.
+    Import attendance from uploaded CSV/XLSX file into ERPNext.
+    - Match Excel 'Person ID' exactly with Employee.employee_id (no leading zero correction)
+    - Create new Attendance even if in_time or out_time is '-' or missing
+    - Skip existing or manual attendance records
+    - Provide detailed reason if employee not found
     """
     try:
+        # --- Get uploaded file ---
         doc = frappe.get_doc("Upload Attendance", docname)
         file_doc = frappe.get_doc("File", {"file_url": doc.attendance_file})
         file_url = file_doc.file_url
@@ -30,24 +37,22 @@ def import_attendance(docname):
         if not os.path.exists(file_path):
             frappe.throw(f"File not found: {file_url}")
 
-        # --- Read File ---
+        # --- Read Excel or CSV ---
         file_name = file_doc.file_name.lower()
         if file_name.endswith(".csv"):
-            df = pd.read_csv(file_path, header=4)
+            df = pd.read_csv(file_path, header=4, dtype=str, keep_default_na=False)
         elif file_name.endswith(".xlsx"):
-            df = pd.read_excel(file_path, engine='openpyxl', header=4)
+            df = pd.read_excel(file_path, engine="openpyxl", header=4, dtype=str, keep_default_na=False)
         else:
-            frappe.msgprint("Unsupported file format! Please upload CSV or XLSX.")
-            return
+            frappe.throw("Unsupported file format! Please upload CSV or XLSX.")
 
         if df.empty:
-            frappe.throw("File has no data!")
+            frappe.throw("No data found in the uploaded file.")
 
+        # --- Normalize headers ---
         df.columns = [c.strip().lower() for c in df.columns]
-
-        # --- Map CSV columns to Attendance fields ---
         column_map = {
-            "person id": "employee_id",
+            "person id": "person_id",
             "name": "employee_name",
             "date": "attendance_date",
             "check-in": "in_time",
@@ -55,139 +60,150 @@ def import_attendance(docname):
         }
         df.rename(columns=lambda x: column_map.get(x, x), inplace=True)
 
-        attendance_fields = ["employee_id", "employee", "employee_name", "attendance_date", "in_time", "out_time", "status"]
-
-        # --- Validate ---
-        if "employee_id" not in df.columns:
+        if "person_id" not in df.columns:
             frappe.throw("CSV must contain 'Person ID' column!")
 
-        inserted_count = 0
-        skipped_count = 0
-        error_rows = []
+        # --- Clean Person IDs ---
+        df["person_id"] = (
+            df["person_id"]
+            .astype(str)
+            .str.strip()
+            .str.replace(r"\.0$", "", regex=True)
+            .replace({"None": "", "nan": ""})
+        )
 
-        # --- Process Each Row ---
-        for index, row in df.iterrows():
+        # --- Cache employee table for faster lookup ---
+        employees = frappe.db.get_all("Employee", ["name", "employee_id", "employee_name"])
+        emp_dict = {str(e["employee_id"]).strip(): e for e in employees if e["employee_id"]}
+
+        created, skipped, errors = [], [], []
+
+        for idx, row in df.iterrows():
             try:
-                row_dict = {k: (None if pd.isna(v) or str(v).strip().lower() in ["", "nan"] else v)
-                            for k, v in row.items()}
-
-                person_id = row_dict.get("employee_id")
+                person_id = str(row.get("person_id", "")).strip()
 
                 if not person_id:
-                    error_rows.append(f"Row {index+1}: Missing Person ID")
-                    skipped_count += 1
+                    skipped.append(f"Row {idx+1}: ❌ Missing Person ID")
                     continue
 
-                # Normalize Person ID (handle Excel numeric)
-                try:
-                    person_id = str(int(float(person_id)))
-                except Exception:
-                    person_id = str(person_id).strip()
+                # --- Exact match only ---
+                emp = emp_dict.get(person_id)
 
-                # Normalize Person ID (handle Excel numeric + zero padding)
-                try:
-                    person_id_raw = str(int(float(person_id)))
-                except Exception:
-                    person_id_raw = str(person_id).strip()
+                if not emp:
+                    pid_no_zero = person_id.lstrip("0")
+                    similar = next((e for e in emp_dict.keys() if e == pid_no_zero), None)
+                    reason = "No matching Employee.employee_id found"
 
-                # Try match with or without padding (up to 5 digits)
-                possible_ids = [person_id_raw.zfill(i) for i in range(1, 6)]
-                employee_name = None
+                    if similar:
+                        reason += f" (Found '{similar}' without leading zeros)"
+                    elif any(e.lower() == person_id.lower() for e in emp_dict.keys()):
+                        reason += " (Case mismatch)"
+                    else:
+                        reason += " (Completely missing in Employee table)"
 
-                for pid in possible_ids:
-                    employee_name = frappe.db.get_value("Employee", {"employee_id": pid}, "name")
-                    if employee_name:
-                        break
-
-                # If still not found, try match against Employee.name (ERP ID)
-                if not employee_name:
-                    employee_name = frappe.db.get_value("Employee", {"name": person_id_raw}, "name")
-
-                if not employee_name:
-                    error_rows.append(f"Row {index+1}: No Employee found for Person ID '{person_id_raw}'")
-                    skipped_count += 1
+                    skipped.append(f"Row {idx+1}: ❌ {reason} → Person ID '{person_id}'")
                     continue
 
-                # Add employee link to row
-                row_dict["employee"] = employee_name
-                row_dict["employee_id"] = person_id_raw
+                emp_name = emp["name"]
+                emp_employee_id = emp["employee_id"]
+                emp_employee_name = emp["employee_name"]
 
+                # --- Attendance Date ---
+                attendance_date = row.get("attendance_date")
+                if not attendance_date:
+                    skipped.append(f"Row {idx+1}: ⚠️ Missing Attendance Date for {emp_name}")
+                    continue
 
-                # Add employee link to the row
-                row_dict["employee"] = employee_name
-                row_dict["employee_id"] = person_id  # keep original ID from CSV
+                # --- Normalize Times (accept '-' or empty) ---
+                in_time_raw = str(row.get("in_time", "")).strip()
+                out_time_raw = str(row.get("out_time", "")).strip()
+                in_time = None if in_time_raw in ["-", "", "None", "nan"] else normalize_time(in_time_raw)
+                out_time = None if out_time_raw in ["-", "", "None", "nan"] else normalize_time(out_time_raw)
 
-                # --- Mark Status ---
-                if row_dict.get("in_time") in [None, "-", "–"] or row_dict.get("out_time") in [None, "-", "–"]:
-                    row_dict["status"] = "Absent"
-                    row_dict["in_time"] = None
-                    row_dict["out_time"] = None
-                else:
-                    row_dict["status"] = "Present"
-                    row_dict["in_time"] = normalize_time(row_dict["in_time"])
-                    row_dict["out_time"] = normalize_time(row_dict["out_time"])
-
-                # --- Avoid duplicates ---
-                existing = frappe.db.exists({
+                # --- Skip if attendance already exists ---
+                exists = frappe.db.exists({
                     "doctype": "Attendance",
-                    "employee": row_dict["employee"],
-                    "attendance_date": row_dict["attendance_date"]
+                    "employee": emp_name,
+                    "attendance_date": attendance_date
                 })
-                if existing:
-                    skipped_count += 1
-                    error_rows.append(
-                        f"Row {index+1}: Attendance already exists for {row_dict['employee']} on {row_dict['attendance_date']}"
-                    )
+                if exists:
+                    skipped.append(f"Row {idx+1}: ⚪ Attendance already exists for {emp_name} on {attendance_date}")
                     continue
 
-                # --- Create Attendance ---
-                attendance_doc = frappe.get_doc({
+                # --- Create new Attendance (even with missing times) ---
+                new_doc = frappe.get_doc({
                     "doctype": "Attendance",
-                    "employee": row_dict["employee"],
-                    "employee_id": row_dict["employee_id"],
-                    "employee_name": row_dict.get("employee_name"),
-                    "attendance_date": row_dict.get("attendance_date"),
-                    "in_time": row_dict.get("in_time"),
-                    "out_time": row_dict.get("out_time"),
-                    "status": row_dict.get("status")
+                    "employee": emp_name,
+                    "employee_id": emp_employee_id,
+                    "employee_name": emp_employee_name,
+                    "attendance_date": attendance_date,
+                    "in_time": in_time,
+                    "out_time": out_time
                 })
-                attendance_doc.insert(ignore_permissions=True)
-                inserted_count += 1
+                new_doc.insert(ignore_permissions=True)
+                created.append(
+                    f"✅ {emp_name} | {attendance_date} inserted (In: {in_time or '-'}, Out: {out_time or '-'})"
+                )
 
             except Exception as e:
-                error_rows.append(f"Row {index+1}: {str(e)}")
+                errors.append(f"Row {idx+1}: ❌ {str(e)}")
 
         frappe.db.commit()
 
-        msg = f"{inserted_count} Attendance records imported successfully."
-        if skipped_count:
-            msg += f"<br>{skipped_count} records skipped."
-        if error_rows:
-            msg += "<br><br>Errors:<br>" + "<br>".join(error_rows)
+        # --- Summary ---
+        summary = (
+            f"<b>Attendance Import Summary</b><br>"
+            f"✅ Created: {len(created)}<br>"
+            f"⚪ Skipped: {len(skipped)}<br>"
+            f"🔴 Errors: {len(errors)}<br><br>"
+        )
+        if created:
+            summary += "<b>✅ Created:</b><br>" + "<br>".join(created[:20]) + "<br><br>"
+        if skipped:
+            summary += "<b>⚪ Skipped (with reasons):</b><br>" + "<br>".join(skipped[:30]) + "<br><br>"
+        if errors:
+            summary += "<b>🔴 Errors:</b><br>" + "<br>".join(errors[:20]) + "<br>"
 
-        return msg
+        return summary
 
     except Exception as e:
         frappe.throw(f"Error importing attendance: {e}")
 
 
+# === Robust Time Normalizer ===
 def normalize_time(value):
-    """Normalize time from string or Excel float to HH:MM format."""
-    if value in [None, "-", "–", "nan"]:
+    """Convert Excel/float/string time to HH:MM:SS"""
+    if value in [None, "", "-", "–", "nan", "NaT"] or pd.isna(value):
         return None
 
+    if isinstance(value, time):
+        return value.strftime("%H:%M:%S")
+
+    if isinstance(value, (pd.Timestamp, datetime)):
+        try:
+            return value.time().strftime("%H:%M:%S")
+        except Exception:
+            return value.strftime("%H:%M:%S")
+
     try:
-        if isinstance(value, (int, float)):
-            time_obj = pd.to_datetime(value, unit='d', origin='1899-12-30').time()
-            return time_obj.strftime("%H:%M")
+        if isinstance(value, (int, float, np.number)) or re.match(r"^\d+(\.\d+)?$", str(value)):
+            t = pd.to_datetime(float(value), unit="d", origin="1899-12-30").time()
+            return t.strftime("%H:%M:%S")
     except Exception:
         pass
 
-    value = str(value).strip()
-    for fmt in ("%H:%M:%S", "%H:%M"):
+    value = str(value).strip().replace("\xa0", "").replace(" ", "")
+
+    for fmt in ("%H:%M:%S", "%H:%M", "%I:%M %p", "%I:%M:%S %p", "%H.%M"):
         try:
-            return datetime.strptime(value, fmt).strftime("%H:%M")
-        except ValueError:
+            return datetime.strptime(value, fmt).strftime("%H:%M:%S")
+        except Exception:
             continue
 
-    raise ValueError(f"Invalid time format: {value}")
+    match = re.search(r"(\d{1,2})[:.](\d{2})(?::(\d{2}))?", value)
+    if match:
+        hh, mm, ss = int(match.group(1)), int(match.group(2)), int(match.group(3) or 0)
+        return f"{hh:02d}:{mm:02d}:{ss:02d}"
+
+    frappe.log_error(f"Unrecognized time format: {repr(value)}", "Attendance Import")
+    return None

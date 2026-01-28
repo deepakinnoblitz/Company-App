@@ -16,7 +16,7 @@
  "link_to": "Estimation",
  "link_type": "DocType",
  "links": [],
- "modified": "2025-10-13 11:08:10.121205",
+ "modified": "2026-01-08 11:01:43.426271",
  "modified_by": "Administrator",
  "module": "Company",
  "name": "Estimations",
@@ -28,9 +28,18 @@
  "roles": [
   {
    "role": "Sales"
+  },
+  {
+   "role": "Sales Employee"
+  },
+  {
+   "role": "Sales Employee Junior"
+  },
+  {
+   "role": "CRM And Sales"
   }
  ],
- "sequence_id": 27.0,
+ "sequence_id": 37.0,
  "shortcuts": [],
  "title": "Estimations",
  "type": "Link"

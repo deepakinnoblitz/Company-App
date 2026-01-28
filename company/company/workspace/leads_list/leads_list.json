@@ -11,12 +11,12 @@
  "icon": "arrow-down-left",
  "idx": 0,
  "indicator_color": "green",
- "is_hidden": 0,
+ "is_hidden": 1,
  "label": "Leads List",
  "link_to": "Leads",
  "link_type": "DocType",
  "links": [],
- "modified": "2025-10-13 11:13:12.677149",
+ "modified": "2026-01-05 12:31:10.052171",
  "modified_by": "Administrator",
  "module": "Company",
  "name": "Leads List",
@@ -28,9 +28,15 @@
  "roles": [
   {
    "role": "Sales"
+  },
+  {
+   "role": "Sales Employee"
+  },
+  {
+   "role": "Sales Employee Junior"
   }
  ],
- "sequence_id": 29.0,
+ "sequence_id": 33.0,
  "shortcuts": [],
  "title": "Leads List",
  "type": "Link"

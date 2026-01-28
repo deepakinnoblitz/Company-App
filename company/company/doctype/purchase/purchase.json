@@ -6,140 +6,157 @@
  "doctype": "DocType",
  "engine": "InnoDB",
  "field_order": [
-  "purchase_details_section",
-  "vendor_name",
-  "bill_date",
-  "payment_type",
-  "column_break_nfoe",
-  "bill_no",
-  "payment_terms",
-  "due_date",
-  "section_break_wbpo",
-  "table_qecz",
-  "section_break_mzdp",
-  "attach",
-  "description",
-  "column_break_ofbd",
-  "total_amount",
-  "total_qty",
-  "overall_discount_type",
-  "overall_discount",
-  "grand_total"
- ],
- "fields": [
-  {
-   "fieldname": "vendor_name",
-   "fieldtype": "Link",
-   "in_list_view": 1,
-   "label": "Vendor Name",
-   "options": "Customer",
-   "reqd": 1
-  },
-  {
-   "fieldname": "column_break_nfoe",
-   "fieldtype": "Column Break"
-  },
-  {
-   "fieldname": "section_break_wbpo",
-   "fieldtype": "Section Break",
-   "label": "Items"
-  },
-  {
-   "fieldname": "table_qecz",
-   "fieldtype": "Table",
-   "options": "Purchase Items"
-  },
-  {
-   "fieldname": "section_break_mzdp",
-   "fieldtype": "Section Break"
-  },
-  {
-   "fieldname": "overall_discount_type",
-   "fieldtype": "Select",
-   "label": " Overall Discount Type",
-   "options": "\nFlat\nPercentage"
-  },
-  {
-   "fieldname": "overall_discount",
-   "fieldtype": "Float",
-   "label": " Overall Discount",
-   "precision": "2"
-  },
-  {
-   "fieldname": "grand_total",
-   "fieldtype": "Float",
-   "label": "Grand Total",
-   "precision": "2",
-   "read_only": 1
-  },
-  {
-   "fieldname": "attach",
-   "fieldtype": "Attach",
-   "label": "Add Files"
-  },
-  {
-   "fieldname": "description",
-   "fieldtype": "Small Text",
-   "label": "Description"
-  },
-  {
-   "fieldname": "column_break_ofbd",
-   "fieldtype": "Column Break"
-  },
-  {
-   "fieldname": "purchase_details_section",
-   "fieldtype": "Section Break",
-   "label": "Purchase Details"
-  },
-  {
-   "fieldname": "total_qty",
-   "fieldtype": "Float",
-   "label": "Total Quantity",
-   "read_only": 1
-  },
-  {
-   "fieldname": "total_amount",
-   "fieldtype": "Float",
-   "label": "Total Amount",
-   "read_only": 1
-  },
-  {
-   "fieldname": "payment_terms",
-   "fieldtype": "Select",
-   "label": "Payment Terms",
-   "options": "Select Payment terms\nNext day Payment\nDue On Receipt\n15 days\n30 days\n60 days\n1 Year",
-   "reqd": 1
-  },
-  {
-   "fieldname": "due_date",
-   "fieldtype": "Date",
-   "label": "Due Date"
-  },
-  {
-   "fieldname": "bill_date",
-   "fieldtype": "Date",
-   "in_list_view": 1,
-   "label": "Bill Date",
-   "reqd": 1
-  },
-  {
-   "fieldname": "payment_type",
-   "fieldtype": "Link",
-   "label": "Payment Type",
-   "options": "Payment Type",
-   "reqd": 1
-  },
-  {
-   "fieldname": "bill_no",
-   "fieldtype": "Data",
-   "label": "Bill No",
-   "reqd": 1
-  }
- ],
+        "purchase_details_section",
+        "vendor_name",
+        "bill_date",
+        "payment_type",
+        "column_break_nfoe",
+        "bill_no",
+        "payment_terms",
+        "due_date",
+        "section_break_wbpo",
+        "table_qecz",
+        "section_break_mzdp",
+        "attach",
+        "description",
+        "column_break_ofbd",
+        "total_amount",
+        "total_qty",
+        "overall_discount_type",
+        "overall_discount",
+        "grand_total",
+        "paid_amount",
+        "balance_amount"
+    ],
+    "fields": [
+        {
+            "fieldname": "vendor_name",
+            "fieldtype": "Link",
+            "in_list_view": 1,
+            "label": "Vendor Name",
+            "options": "Contacts",
+            "reqd": 1,
+            "get_query": "company.company.doctype.purchase.purchase.get_purchase_contacts"
+        },
+        {
+            "fieldname": "paid_amount",
+            "fieldtype": "Float",
+            "label": "Paid Amount",
+            "precision": "2",
+            "read_only": 1
+        },
+        {
+            "fieldname": "balance_amount",
+            "fieldtype": "Float",
+            "label": "Balance Amount",
+            "precision": "2",
+            "read_only": 1
+        },
+        {
+            "fieldname": "column_break_nfoe",
+            "fieldtype": "Column Break"
+        },
+        {
+            "fieldname": "section_break_wbpo",
+            "fieldtype": "Section Break",
+            "label": "Items"
+        },
+        {
+            "fieldname": "table_qecz",
+            "fieldtype": "Table",
+            "options": "Purchase Items"
+        },
+        {
+            "fieldname": "section_break_mzdp",
+            "fieldtype": "Section Break"
+        },
+        {
+            "fieldname": "overall_discount_type",
+            "fieldtype": "Select",
+            "label": " Overall Discount Type",
+            "options": "\nFlat\nPercentage"
+        },
+        {
+            "fieldname": "overall_discount",
+            "fieldtype": "Float",
+            "label": " Overall Discount",
+            "precision": "2"
+        },
+        {
+            "fieldname": "grand_total",
+            "fieldtype": "Float",
+            "label": "Grand Total",
+            "precision": "2",
+            "read_only": 1
+        },
+        {
+            "fieldname": "attach",
+            "fieldtype": "Attach",
+            "label": "Add Files"
+        },
+        {
+            "fieldname": "description",
+            "fieldtype": "Small Text",
+            "label": "Description"
+        },
+        {
+            "fieldname": "column_break_ofbd",
+            "fieldtype": "Column Break"
+        },
+        {
+            "fieldname": "purchase_details_section",
+            "fieldtype": "Section Break",
+            "label": "Purchase Details"
+        },
+        {
+            "fieldname": "total_qty",
+            "fieldtype": "Float",
+            "label": "Total Quantity",
+            "read_only": 1
+        },
+        {
+            "fieldname": "total_amount",
+            "fieldtype": "Float",
+            "label": "Total Amount",
+            "read_only": 1
+        },
+        {
+            "fieldname": "payment_terms",
+            "fieldtype": "Select",
+            "label": "Payment Terms",
+            "options": "Select Payment terms\nNext day Payment\nDue On Receipt\n15 days\n30 days\n60 days\n1 Year",
+            "reqd": 1
+        },
+        {
+            "fieldname": "due_date",
+            "fieldtype": "Date",
+            "label": "Due Date"
+        },
+        {
+            "fieldname": "bill_date",
+            "fieldtype": "Date",
+            "in_list_view": 1,
+            "label": "Bill Date",
+            "reqd": 1
+        },
+        {
+            "fieldname": "payment_type",
+            "fieldtype": "Link",
+            "label": "Payment Type",
+            "options": "Payment Type",
+            "reqd": 1
+        },
+        {
+            "fieldname": "bill_no",
+            "fieldtype": "Data",
+            "label": "Bill No",
+            "reqd": 1
+        }
+    ],
  "grid_page_length": 50,
  "index_web_pages_for_search": 1,
  "links": [],
- "modified": "2025-09-24 13:09:17.107010",
+ "modified": "2026-01-05 13:01:01.913122",
  "modified_by": "Administrator",
  "module": "Company",
  "name": "Purchase",

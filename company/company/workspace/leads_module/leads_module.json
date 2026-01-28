@@ -1,0 +1,42 @@
+{
+ "app": "company",
+ "charts": [],
+ "content": "[{\"id\":\"Bpqho_srl5\",\"type\":\"header\",\"data\":{\"text\":\"<span class=\\\"h4\\\">Leads Module</span>\",\"col\":12}}]",
+ "creation": "2025-12-12 17:13:27.838326",
+ "custom_blocks": [],
+ "docstatus": 0,
+ "doctype": "Workspace",
+ "for_user": "",
+ "hide_custom": 0,
+ "icon": "users",
+ "idx": 0,
+ "indicator_color": "green",
+ "is_hidden": 0,
+ "label": "Leads Module",
+ "link_type": "DocType",
+ "links": [],
+ "modified": "2026-01-08 10:57:58.730097",
+ "modified_by": "Administrator",
+ "module": "Company",
+ "name": "Leads Module",
+ "number_cards": [],
+ "owner": "Administrator",
+ "parent_page": "",
+ "public": 1,
+ "quick_lists": [],
+ "roles": [
+  {
+   "role": "CRM User"
+  },
+  {
+   "role": "Sales"
+  },
+  {
+   "role": "CRM And Sales"
+  }
+ ],
+ "sequence_id": 31.0,
+ "shortcuts": [],
+ "title": "Leads Module",
+ "type": "Workspace"
+}

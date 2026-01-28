@@ -19,14 +19,31 @@ app_include_js = [
     "/assets/company/js/leave_allocation.js",
     "/assets/company/js/attendance_list.js",
     "/assets/company/js/wfh_attendance_list.js",
-    # "/assets/company/js/firebase_init.js",
-    "/assets/company/js/pwa_init.js",
+    "/assets/company/js/firebase_init.js?v=1",
+    "/assets/company/js/pwa_init.js?v=1",
     # "/assets/company/js/socket.io.min.js",
     # "/assets/company/js/socket_init.js",
     "/assets/company/js/custom_link_formatter.js",
+    "/assets/company/js/custom_badge.js",
+    "/assets/company/js/custom_back_button.js",
+    "/assets/company/js/birthday_animation.js",
+    "/assets/company/js/custom-sidebar-menu.js",
+    "/assets/company/js/default_phone_no.js",
+    "/assets/company/js/logo.js",
+    "/assets/company/js/clear_cache.js?v=1",
+    "/assets/company/js/profile_picture.js",
+    "/assets/company/js/event_popup.js",
+    "/assets/company/js/parent_sidebar.js?v=1",
+    "/assets/company/js/global_list_actions.js",
+    # "/assets/company/js/expense_list.js",
+    # "/assets/company/js/income_list.js",
+    "/assets/company/js/sidebar-active-state.js",
+    "/assets/company/js/expense_tracker.js",
+    "/assets/company/js/list_pagination.js",
 ]
 
-app_include_css = "/assets/company/css/custom.css"
+app_include_css = "/assets/company/css/custom.css?v=17"
+
 
 doc_events = {
     "Estimation": {
@@ -37,13 +54,17 @@ doc_events = {
     },
     "Invoice Collection": {
         "after_insert": "company.company.api.update_invoice_received_balance",
-        "on_update": "company.company.api.update_invoice_received_balance",
-        "on_trash": "company.company.api.update_invoice_received_balance"
-    },
-    "Invoice Collection": {
         "validate": "company.company.api.validate_invoice_collection",
         "on_update": "company.company.api.update_invoice_received_balance",
         "on_trash": "company.company.api.update_invoice_received_balance"
+    },
+    "Purchase": {
+        "validate": "company.company.api.validate_purchase_with_collections"
+    },
+    "Purchase Collection": {
+        "validate": "company.company.api.validate_purchase_collection",
+        "on_update": "company.company.api.update_purchase_paid_balance",
+        "on_trash": "company.company.api.update_purchase_paid_balance"
     },
     "Expenses": {
         "before_insert": "company.company.api.before_insert_expense"
@@ -51,14 +72,31 @@ doc_events = {
     "Leave Application": {
         "validate": "company.company.api.validate_leave_balance",
         "before_submit": "company.company.api.validate_leave_balance",
-        "on_submit": "company.company.api.handle_leave_submit",
+        "on_submit": ["company.company.api.create_unread_entry_for_hr"],
         "on_change": [
-            "company.company.api.handle_leave_status_change",
             "company.company.api.update_permission_allocation"
-        ]
+        ],
+        "after_insert": "company.company.api.auto_submit_leave_application"
     },
     "Attendance": {
         "on_update": "company.company.api.update_leave_allocation_from_attendance",
+    },
+    "WFH Attendance": {
+        "on_submit": "company.company.api.create_unread_entry_for_hr"
+    },
+    "Request": {
+        "on_submit": "company.company.api.create_unread_entry_for_hr"
+    },
+    "Salary Slip": {
+        "on_submit": "company.company.api.salary_slip_after_submit"
+    },
+    "Event": {
+        "on_update": [
+            "company.company.crm_api.sync_event_to_call",
+            "company.company.crm_api.sync_event_to_meeting",
+            "company.company.crm_api.sync_event_to_todo"
+        ],
+        "validate": "company.company.crm_api.validate_event"
     }
 }
 
@@ -84,6 +122,14 @@ def safe_print(*args, **kwargs):
 
 # Apply globally so any print() in Frappe or custom apps is safe
 builtins.print = safe_print
+
+
+# Website Route Rules
+# -------------------
+# Handle client-side routing for React SPA
+website_route_rules = [
+    {"from_route": "/crm/<path:app_path>", "to_route": "crm"},
+]
 
 
 extend_bootinfo = "company.company.api.extend_bootinfo"
