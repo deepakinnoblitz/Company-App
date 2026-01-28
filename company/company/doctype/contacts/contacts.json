@@ -52,9 +52,9 @@
         },
         {
             "fieldname": "phone",
-            "fieldtype": "Phone",
+            "fieldtype": "Data",
             "in_list_view": 1,
-            "label": "Phone"
+            "label": "Phone (+91-)"
         },
         {
             "fieldname": "column_break",
